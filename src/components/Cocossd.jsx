@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
-import * as tf from "@tensorflow/tfjs";
+import React, { useRef, useEffect, useCallback } from "react";
+import "@tensorflow/tfjs";
 import { load } from "@tensorflow-models/coco-ssd";
 import Webcam from "react-webcam";
 
@@ -8,38 +8,42 @@ export const Cocossd = () => {
   const canvasRef = useRef(null);
   const timer = useRef(null);
 
-  const initialize = async () => {
+  const initialize = useCallback(async () => {
     const cocossd = await load();
 
     const t = setInterval(() => {
       detect(cocossd);
-    }, 1000);
+    }, 10);
     timer.current = t;
-  };
+  }, []);
 
   const detect = async (cocossd) => {
     if (webcamRef.current?.video?.readyState === 4 && canvasRef.current) {
-      // Get Video Properties
       const video = webcamRef.current.video;
       const videoWidth = webcamRef.current.video.videoWidth;
       const videoHeight = webcamRef.current.video.videoHeight;
 
-      // Set video width
-      webcamRef.current.video.width = videoWidth;
-      webcamRef.current.video.height = videoHeight;
-
-      // Set canvas height and width
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
 
-      const obj = await cocossd.detect(video);
-      console.log(obj);
+      const detection = await cocossd.detect(video);
 
-      // Draw mesh
       const ctx = canvasRef.current.getContext("2d");
 
-      // 5. TODO - Update drawing utility
-      // drawSomething(obj, ctx)
+      detection.forEach((_detection) => {
+        const [x, y, width, height] = _detection.bbox;
+        const _class = _detection.class;
+        const color = "red";
+
+        ctx.strokeStyle = color;
+        ctx.font = "18px Arial";
+        ctx.fillStyle = color;
+
+        ctx.beginPath();
+        ctx.fillText(_class, x, y);
+        ctx.rect(x, y, width, height);
+        ctx.stroke();
+      });
     }
   };
 
