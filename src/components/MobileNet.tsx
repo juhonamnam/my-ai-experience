@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useCamData } from "./Cam";
-import "@tensorflow/tfjs";
 import { load, MobileNet as IMobileNet } from "@tensorflow-models/mobilenet";
 
 export const MobileNet = () => {

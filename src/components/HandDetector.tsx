@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useCamData } from "./Cam";
-import "@tensorflow/tfjs";
 import {
   createDetector,
   HandDetector as IHandDetector,
@@ -10,12 +9,12 @@ import {
 export const HandDetector = () => {
   const { setCamDataProcess, clear } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const handPose = useRef<IHandDetector>();
+  const handDetector = useRef<IHandDetector>();
 
   const detect = async (camData: HTMLVideoElement) => {
-    if (!handPose.current) return;
+    if (!handDetector.current) return;
 
-    const detection = await handPose.current.estimateHands(camData);
+    const detection = await handDetector.current.estimateHands(camData);
 
     detection.forEach((hand) => {
       hand.keypoints.forEach((k) => console.log(k));
@@ -28,10 +27,13 @@ export const HandDetector = () => {
       // solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/hands",
       // modelType: "full",
     }).then((h) => {
-      handPose.current = h;
+      handDetector.current = h;
     });
     setCamDataProcess((camData) => detect(camData));
-    return () => clear();
+    return () => {
+      handDetector.current?.dispose();
+      clear();
+    };
   }, [setCamDataProcess, clear]);
 
   return (

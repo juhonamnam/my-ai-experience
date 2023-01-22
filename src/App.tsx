@@ -3,6 +3,7 @@ import "./App.css";
 import Cam from "./components/Cam";
 import { Cocossd } from "./components/Cocossd";
 // import { HandDetector } from "./components/HandDetector";
+import "@tensorflow/tfjs";
 import { MobileNet } from "./components/MobileNet";
 
 function App() {

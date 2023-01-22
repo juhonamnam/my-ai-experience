@@ -1,5 +1,4 @@
 import { useRef, useEffect } from "react";
-import "@tensorflow/tfjs";
 import { load, ObjectDetection } from "@tensorflow-models/coco-ssd";
 import { useCamData } from "./Cam";
 
@@ -42,7 +41,10 @@ export const Cocossd = () => {
       cocossd.current = c;
     });
     setCamDataProcess((camData) => detect(camData));
-    return () => clear();
+    return () => {
+      cocossd.current?.dispose();
+      clear();
+    };
   }, [clear, setCamDataProcess]);
 
   return (
