@@ -9,6 +9,7 @@ import {
 
 const MODEL = SupportedModels.MoveNet;
 const ADJACENT_PAIRS = util.getAdjacentPairs(MODEL);
+const SCORE_THRESHOLD = 0.3;
 
 export const PoseDetection = () => {
   const { setCamDataProcess, clear } = useCamData();
@@ -32,7 +33,12 @@ export const PoseDetection = () => {
         const from = _detection.keypoints[adj[0]];
         const to = _detection.keypoints[adj[1]];
 
-        if (!from.score || from.score < 0.5 || !to.score || to.score < 0.5)
+        if (
+          !from.score ||
+          from.score < SCORE_THRESHOLD ||
+          !to.score ||
+          to.score < SCORE_THRESHOLD
+        )
           return;
 
         ctx.beginPath();
