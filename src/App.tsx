@@ -1,22 +1,32 @@
 import { useState } from "react";
-import "./App.css";
 import Cam from "./components/Cam";
-import { Cocossd } from "./components/Cocossd";
-// import { HandDetector } from "./components/HandDetector";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "@tensorflow/tfjs";
-import { MobileNet } from "./components/MobileNet";
+import { ImageClassification } from "./components/models/ImageClassification";
+import { ObjectDetection } from "./components/models/ObjectDetection";
+import { PoseDetection } from "./components/models/PoseDetection";
+// import { HandDetection } from "./components/models/HandDetection";
 
 function App() {
   const [type, setType] = useState<
-    null | "mobilenet" | "cocossd" | "handdetector"
+    | null
+    | "imageclassification"
+    | "objectdetection"
+    | "handdetection"
+    | "posedetection"
   >(null);
 
   return (
     <div className="App">
       <button onClick={() => setType(null)}>Reset</button>
-      <button onClick={() => setType("mobilenet")}>MobileNet</button>
-      {/* <button onClick={() => setType("handdetector")}>Hand Detector</button> */}
-      <button onClick={() => setType("cocossd")}>Coco SSD</button>
+      <button onClick={() => setType("imageclassification")}>
+        Image Classification
+      </button>
+      {/* <button onClick={() => setType("handdetection")}>Hand Detection</button> */}
+      <button onClick={() => setType("posedetection")}>Pose Detection</button>
+      <button onClick={() => setType("objectdetection")}>
+        Object Detection
+      </button>
       <div
         style={{
           position: "relative",
@@ -26,9 +36,10 @@ function App() {
       >
         <Cam.CamWrapper>
           <Cam.Cam />
-          {type === "mobilenet" && <MobileNet />}
+          {type === "imageclassification" && <ImageClassification />}
           {/* {type === "handdetector" && <HandDetector />} */}
-          {type === "cocossd" && <Cocossd />}
+          {type === "posedetection" && <PoseDetection />}
+          {type === "objectdetection" && <ObjectDetection />}
         </Cam.CamWrapper>
       </div>
     </div>

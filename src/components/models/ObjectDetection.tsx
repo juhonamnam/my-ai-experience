@@ -1,15 +1,17 @@
 import { useRef, useEffect } from "react";
-import { load, ObjectDetection } from "@tensorflow-models/coco-ssd";
-import { useCamData } from "./Cam";
+import {
+  load,
+  ObjectDetection as IObjectDetection,
+} from "@tensorflow-models/coco-ssd";
+import { useCamData } from "../Cam";
 
-export const Cocossd = () => {
+export const ObjectDetection = () => {
   const { setCamDataProcess, clear } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cocossd = useRef<ObjectDetection>();
+  const cocossd = useRef<IObjectDetection>();
 
   const detect = async (camData: HTMLVideoElement) => {
-    if (!cocossd.current || camData?.readyState !== 4 || !canvasRef.current)
-      return;
+    if (!cocossd.current || !canvasRef.current) return;
 
     const ctx = canvasRef.current.getContext("2d");
 
@@ -29,9 +31,11 @@ export const Cocossd = () => {
       ctx.font = "18px Arial";
       ctx.fillStyle = color;
 
+      const _x = camData.videoWidth - x - width;
+
       ctx.beginPath();
-      ctx.fillText(_class, x, y);
-      ctx.rect(x, y, width, height);
+      ctx.fillText(_class, _x, y);
+      ctx.rect(_x, y, width, height);
       ctx.stroke();
     });
   };

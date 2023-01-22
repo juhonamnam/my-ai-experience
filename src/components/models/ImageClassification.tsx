@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useCamData } from "./Cam";
-import { load, MobileNet as IMobileNet } from "@tensorflow-models/mobilenet";
+import { useCamData } from "../Cam";
+import { load, MobileNet } from "@tensorflow-models/mobilenet";
 
-export const MobileNet = () => {
+export const ImageClassification = () => {
   const { setCamDataProcess, clear } = useCamData();
-  const mobileNet = useRef<IMobileNet>();
+  const mobileNet = useRef<MobileNet>();
   const [predictions, setPredictions] = useState<
     { className: string; probability: number }[]
   >([]);

@@ -66,7 +66,7 @@ export const Cam = ({ style }: { style?: CSSProperties }) => {
     };
   }, [camDataProcess]);
 
-  return <Webcam ref={ref} muted={true} style={style} />;
+  return <Webcam mirrored ref={ref} muted style={style} />;
 };
 
 const exportDefault = { useCamData, CamWrapper, Cam };

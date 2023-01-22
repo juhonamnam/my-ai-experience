@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import { useCamData } from "./Cam";
+import { useCamData } from "../Cam";
 import {
   createDetector,
   HandDetector as IHandDetector,
   SupportedModels,
 } from "@tensorflow-models/hand-pose-detection";
 
-export const HandDetector = () => {
+export const HandDetection = () => {
   const { setCamDataProcess, clear } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const handDetector = useRef<IHandDetector>();
