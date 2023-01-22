@@ -5,19 +5,21 @@ import "@tensorflow/tfjs";
 import { ImageClassification } from "./components/models/ImageClassification";
 import { ObjectDetection } from "./components/models/ObjectDetection";
 import { PoseDetection } from "./components/models/PoseDetection";
-// import { HandDetection } from "./components/models/HandDetection";
+// import { HandPoseDetection } from "./components/models/HandPoseDetection";
 
 enum ModelType {
   None = "None",
   ImageClassification = "Image Classification",
-  PoseDetection = "Pose Detection",
   ObjectDetection = "Object Detection",
+  PoseDetection = "Pose Detection",
+  // HandPoseDetection = "Hand Pose Detection",
 }
 const renderModel: { [key in ModelType]: ReactNode } = {
   [ModelType.None]: <></>,
   [ModelType.ImageClassification]: <ImageClassification />,
-  [ModelType.PoseDetection]: <PoseDetection />,
   [ModelType.ObjectDetection]: <ObjectDetection />,
+  [ModelType.PoseDetection]: <PoseDetection />,
+  // [ModelType.HandPoseDetection]: <HandPoseDetection />,
 };
 
 function App() {
@@ -33,7 +35,9 @@ function App() {
           }}
         >
           {Object.values(ModelType).map((type) => (
-            <option value={type}>{type}</option>
+            <option key={type} value={type}>
+              {type}
+            </option>
           ))}
         </select>
         <div

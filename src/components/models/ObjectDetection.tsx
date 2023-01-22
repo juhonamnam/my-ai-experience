@@ -4,14 +4,14 @@ import {
   ObjectDetection as IObjectDetection,
 } from "@tensorflow-models/coco-ssd";
 import { useCamData } from "../Cam";
+import { logger } from "../../logger";
 
 export const ObjectDetection = () => {
   const { setCamDataProcess, clear } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cocossd = useRef<IObjectDetection>();
 
-  const detect = async (camData: HTMLVideoElement) => {
-    if (!cocossd.current || !canvasRef.current) return;
+  const detect = async (model: IObjectDetection, camData: HTMLVideoElement) => {
+    if (!canvasRef.current) return;
 
     const ctx = canvasRef.current.getContext("2d");
 
@@ -20,7 +20,7 @@ export const ObjectDetection = () => {
     canvasRef.current.width = camData.videoWidth;
     canvasRef.current.height = camData.videoHeight;
 
-    const detection = await cocossd.current.detect(camData);
+    const detection = await model.detect(camData);
 
     detection.forEach((_detection) => {
       const [x, y, width, height] = _detection.bbox;
@@ -41,13 +41,21 @@ export const ObjectDetection = () => {
   };
 
   useEffect(() => {
-    load().then((c) => {
-      cocossd.current = c;
-    });
-    setCamDataProcess((camData) => detect(camData));
+    const loadModel = load()
+      .then((model) => {
+        setCamDataProcess((camData) => detect(model, camData));
+        logger("load");
+        return model;
+      })
+      .catch((reason) => {
+        alert(reason);
+      });
     return () => {
-      cocossd.current?.dispose();
-      clear();
+      loadModel.then((model) => {
+        logger("unload");
+        model?.dispose();
+        clear();
+      });
     };
   }, [clear, setCamDataProcess]);
 

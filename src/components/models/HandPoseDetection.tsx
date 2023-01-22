@@ -2,37 +2,43 @@ import { useEffect, useRef } from "react";
 import { useCamData } from "../Cam";
 import {
   createDetector,
-  HandDetector as IHandDetector,
+  HandDetector,
   SupportedModels,
 } from "@tensorflow-models/hand-pose-detection";
+import { logger } from "../../logger";
 
-export const HandDetection = () => {
+export const HandPoseDetection = () => {
   const { setCamDataProcess, clear } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const handDetector = useRef<IHandDetector>();
 
-  const detect = async (camData: HTMLVideoElement) => {
-    if (!handDetector.current) return;
-
-    const detection = await handDetector.current.estimateHands(camData);
+  const detect = async (model: HandDetector, camData: HTMLVideoElement) => {
+    const detection = await model.estimateHands(camData);
 
     detection.forEach((hand) => {
-      hand.keypoints.forEach((k) => console.log(k));
+      hand.keypoints.forEach((k) => logger(k));
     });
   };
 
   useEffect(() => {
-    createDetector(SupportedModels.MediaPipeHands, {
+    const loadModel = createDetector(SupportedModels.MediaPipeHands, {
       runtime: "tfjs",
       // solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/hands",
       // modelType: "full",
-    }).then((h) => {
-      handDetector.current = h;
-    });
-    setCamDataProcess((camData) => detect(camData));
+    })
+      .then((model) => {
+        setCamDataProcess((camData) => detect(model, camData));
+        logger("load");
+        return model;
+      })
+      .catch((reason) => {
+        alert(reason);
+      });
     return () => {
-      handDetector.current?.dispose();
-      clear();
+      loadModel.then((model) => {
+        logger("unload");
+        model?.dispose();
+        clear();
+      });
     };
   }, [setCamDataProcess, clear]);
 

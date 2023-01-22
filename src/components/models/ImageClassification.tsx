@@ -1,28 +1,35 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCamData } from "../Cam";
 import { load, MobileNet } from "@tensorflow-models/mobilenet";
+import { logger } from "../../logger";
 
 export const ImageClassification = () => {
   const { setCamDataProcess, clear } = useCamData();
-  const mobileNet = useRef<MobileNet>();
   const [predictions, setPredictions] = useState<
     { className: string; probability: number }[]
   >([]);
 
-  const predict = async (camData: HTMLVideoElement) => {
-    if (!mobileNet.current) return;
-
-    const prediction = await mobileNet.current.classify(camData);
+  const predict = async (model: MobileNet, camData: HTMLVideoElement) => {
+    const prediction = await model.classify(camData);
 
     setPredictions(prediction);
   };
 
   useEffect(() => {
-    load().then((m) => {
-      mobileNet.current = m;
-    });
-    setCamDataProcess((camData) => predict(camData));
-    return () => clear();
+    const loadModel = load()
+      .then((model) => {
+        setCamDataProcess((camData) => predict(model, camData));
+        logger("load");
+      })
+      .catch((reason) => {
+        alert(reason);
+      });
+    return () => {
+      loadModel.then(() => {
+        logger("unload");
+        clear();
+      });
+    };
   }, [setCamDataProcess, clear]);
 
   return (

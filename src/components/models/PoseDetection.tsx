@@ -6,6 +6,7 @@ import {
   SupportedModels,
   util,
 } from "@tensorflow-models/pose-detection";
+import { logger } from "../../logger";
 
 const MODEL = SupportedModels.MoveNet;
 const ADJACENT_PAIRS = util.getAdjacentPairs(MODEL);
@@ -14,10 +15,9 @@ const SCORE_THRESHOLD = 0.3;
 export const PoseDetection = () => {
   const { setCamDataProcess, clear } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const poseDetection = useRef<PoseDetector>();
 
-  const detect = async (camData: HTMLVideoElement) => {
-    if (!poseDetection.current || !canvasRef.current) return;
+  const detect = async (model: PoseDetector, camData: HTMLVideoElement) => {
+    if (!canvasRef.current) return;
 
     const ctx = canvasRef.current.getContext("2d");
 
@@ -26,7 +26,7 @@ export const PoseDetection = () => {
     canvasRef.current.width = camData.videoWidth;
     canvasRef.current.height = camData.videoHeight;
 
-    const detection = await poseDetection.current.estimatePoses(camData);
+    const detection = await model.estimatePoses(camData);
 
     detection.forEach((_detection) => {
       ADJACENT_PAIRS.forEach((adj) => {
@@ -58,13 +58,21 @@ export const PoseDetection = () => {
   };
 
   useEffect(() => {
-    createDetector(MODEL).then((p) => {
-      poseDetection.current = p;
-    });
-    setCamDataProcess((camData) => detect(camData));
+    const loadModel = createDetector(MODEL)
+      .then((model) => {
+        logger("load");
+        setCamDataProcess((camData) => detect(model, camData));
+        return model;
+      })
+      .catch((reason) => {
+        alert(reason);
+      });
     return () => {
-      poseDetection.current?.dispose();
-      clear();
+      loadModel.then((model) => {
+        logger("unload");
+        model?.dispose();
+        clear();
+      });
     };
   }, [setCamDataProcess, clear]);
 
