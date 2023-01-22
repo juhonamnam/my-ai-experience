@@ -41,9 +41,7 @@ export const Cocossd = () => {
     load().then((c) => {
       cocossd.current = c;
     });
-    setCamDataProcess((camData) => {
-      detect(camData);
-    });
+    setCamDataProcess((camData) => detect(camData));
     return () => clear();
   }, [clear, setCamDataProcess]);
 

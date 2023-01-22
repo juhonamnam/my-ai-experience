@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.2",
+    "@tensorflow-models/hand-pose-detection": "^2.0.0",
+    "@tensorflow-models/mobilenet": "^2.1.0",
     "@tensorflow/tfjs": "^4.1.0",
     "@types/node": "^16.18.3",
     "@types/react": "^18.0.25",
