@@ -17,8 +17,10 @@ export const ObjectDetection = () => {
 
     if (!ctx) return;
 
-    canvasRef.current.width = camData.videoWidth;
-    canvasRef.current.height = camData.videoHeight;
+    canvasRef.current.width = camData.clientWidth;
+    canvasRef.current.height = camData.clientHeight;
+    const h_ratio = camData.clientWidth / camData.videoWidth;
+    const v_ratio = camData.clientHeight / camData.videoHeight;
 
     const detection = await model.detect(camData);
 
@@ -31,11 +33,15 @@ export const ObjectDetection = () => {
       ctx.font = "18px Arial";
       ctx.fillStyle = color;
 
-      const _x = camData.videoWidth - x - width;
+      const _width = width * h_ratio;
+      const _height = height * v_ratio;
+
+      const _x = camData.clientWidth - x * h_ratio - _width;
+      const _y = y * v_ratio;
 
       ctx.beginPath();
-      ctx.fillText(_class, _x, y);
-      ctx.rect(_x, y, width, height);
+      ctx.fillText(_class, _x, _y);
+      ctx.rect(_x, _y, _width, _height);
       ctx.stroke();
     });
   };
@@ -64,6 +70,7 @@ export const ObjectDetection = () => {
       ref={canvasRef}
       style={{
         position: "absolute",
+        width: "100%",
         left: 0,
         right: 0,
       }}

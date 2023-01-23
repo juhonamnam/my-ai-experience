@@ -5,9 +5,7 @@ import {
   createContext,
   useContext,
   MutableRefObject,
-  CSSProperties,
 } from "react";
-import Webcam from "react-webcam";
 
 type CamDataProcess = (input: HTMLVideoElement) => void;
 type SetCamDataProcess = (input: CamDataProcess) => void;
@@ -50,15 +48,25 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
   );
 };
 
-export const Cam = ({ style }: { style?: CSSProperties }) => {
-  const ref = useRef<Webcam>(null);
+export const Cam = () => {
+  const ref = useRef<HTMLVideoElement>(null);
   const timer = useRef<NodeJS.Timer | null>(null);
   const { camDataProcess } = useContext(CamContext);
 
   useEffect(() => {
+    navigator.mediaDevices
+      .getUserMedia({
+        video: { facingMode: "user" },
+      })
+      .then((stream) => {
+        ref.current!.srcObject = stream;
+      });
+  }, []);
+
+  useEffect(() => {
     const t = setInterval(() => {
-      if (ref.current?.video && camDataProcess?.current)
-        camDataProcess.current(ref.current?.video);
+      if (ref.current && camDataProcess?.current)
+        camDataProcess.current(ref.current);
     }, 10);
     timer.current = t;
     return () => {
@@ -66,7 +74,14 @@ export const Cam = ({ style }: { style?: CSSProperties }) => {
     };
   }, [camDataProcess]);
 
-  return <Webcam mirrored ref={ref} muted style={style} />;
+  return (
+    <video
+      autoPlay
+      width="100%"
+      style={{ transform: "scaleX(-1)" }}
+      ref={ref}
+    />
+  );
 };
 
 const exportDefault = { useCamData, CamWrapper, Cam };

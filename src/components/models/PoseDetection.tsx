@@ -23,8 +23,11 @@ export const PoseDetection = () => {
 
     if (!ctx) return;
 
-    canvasRef.current.width = camData.videoWidth;
-    canvasRef.current.height = camData.videoHeight;
+    canvasRef.current.width = camData.clientWidth;
+    canvasRef.current.height = camData.clientHeight;
+
+    const h_ratio = camData.clientWidth / camData.videoWidth;
+    const v_ratio = camData.clientHeight / camData.videoHeight;
 
     const detection = await model.estimatePoses(camData);
 
@@ -43,12 +46,12 @@ export const PoseDetection = () => {
 
         ctx.beginPath();
         ctx.moveTo(
-          camData.videoWidth - _detection.keypoints[adj[0]].x,
-          _detection.keypoints[adj[0]].y
+          camData.clientWidth - _detection.keypoints[adj[0]].x * h_ratio,
+          _detection.keypoints[adj[0]].y * v_ratio
         );
         ctx.lineTo(
-          camData.videoWidth - _detection.keypoints[adj[1]].x,
-          _detection.keypoints[adj[1]].y
+          camData.clientWidth - _detection.keypoints[adj[1]].x * h_ratio,
+          _detection.keypoints[adj[1]].y * v_ratio
         );
         ctx.lineWidth = 3;
         ctx.strokeStyle = "red";
