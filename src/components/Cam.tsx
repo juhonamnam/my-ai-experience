@@ -91,9 +91,13 @@ export const Cam = () => {
       <select
         className="form-select"
         onChange={(e) => {
-          navigator.mediaDevices.getUserMedia({
-            video: { deviceId: { exact: e.currentTarget.value } },
-          });
+          navigator.mediaDevices
+            .getUserMedia({
+              video: { deviceId: { exact: e.currentTarget.value } },
+            })
+            .then((stream) => {
+              ref.current!.srcObject = stream;
+            });
         }}
         ref={selectRef}
       />
