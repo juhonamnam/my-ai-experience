@@ -35,9 +35,17 @@ export const ImageClassification = () => {
   return (
     <>
       {predictions.map((p) => (
-        <p key={p.className}>
-          {p.className} {p.probability}
-        </p>
+        <div key={p.className}>
+          <div>{p.className}</div>
+          <div className="progress">
+            <div
+              className="progress-bar"
+              style={{ width: `${p.probability * 100}%` }}
+            >
+              {(p.probability * 100).toFixed(2)}
+            </div>
+          </div>
+        </div>
       ))}
     </>
   );
