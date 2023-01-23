@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   MutableRefObject,
+  useState,
 } from "react";
 
 type CamDataProcess = (input: HTMLVideoElement) => void;
@@ -12,33 +13,38 @@ type SetCamDataProcess = (input: CamDataProcess) => void;
 type ClearCamDataProcess = () => void;
 
 const CamContext = createContext<{
-  camDataProcess?: MutableRefObject<CamDataProcess | null>;
+  flipRef: MutableRefObject<boolean>;
+  camDataProcessRef: MutableRefObject<CamDataProcess | null>;
   setCamDataProcess: SetCamDataProcess;
   clear: ClearCamDataProcess;
 }>({
+  flipRef: { current: false },
+  camDataProcessRef: { current: null },
   setCamDataProcess: () => {},
   clear: () => {},
 });
 
 export const useCamData = () => {
-  const { setCamDataProcess, clear } = useContext(CamContext);
-  return { setCamDataProcess, clear };
+  const { setCamDataProcess, clear, flipRef } = useContext(CamContext);
+  return { setCamDataProcess, clear, flipRef };
 };
 
 export const CamWrapper = ({ children }: PropsWithChildren) => {
-  const camDataProcess = useRef<CamDataProcess | null>(null);
+  const camDataProcessRef = useRef<CamDataProcess | null>(null);
+  const flipRef = useRef(false);
   const setCamDataProcess: SetCamDataProcess = (p) => {
-    camDataProcess.current = p;
+    camDataProcessRef.current = p;
   };
 
   const clear: ClearCamDataProcess = () => {
-    camDataProcess.current = null;
+    camDataProcessRef.current = null;
   };
 
   return (
     <CamContext.Provider
       value={{
-        camDataProcess: camDataProcess,
+        flipRef,
+        camDataProcessRef,
         setCamDataProcess,
         clear,
       }}
@@ -49,64 +55,78 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
 };
 
 export const Cam = () => {
-  const ref = useRef<HTMLVideoElement>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
-  const timer = useRef<NodeJS.Timer | null>(null);
-  const { camDataProcess } = useContext(CamContext);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const timerRef = useRef<NodeJS.Timer | null>(null);
+  const { camDataProcessRef, flipRef } = useContext(CamContext);
+  const [devices, setDevices] = useState<{ label: string; value: string }[]>(
+    []
+  );
 
   useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({
-        video: { facingMode: "user" },
-      })
-      .then((stream) => {
-        ref.current!.srcObject = stream;
-      });
-
     navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const d: { label: string; value: string }[] = [];
       devices.forEach((device) => {
         if (device.kind === "videoinput") {
-          const option = document.createElement("option");
-          option.value = device.deviceId;
-          option.label = device.label;
-          selectRef.current?.appendChild(option);
+          d.push({ value: device.deviceId, label: device.label });
         }
       });
+      navigator.mediaDevices
+        .getUserMedia({
+          video: { deviceId: d[0].value },
+        })
+        .then((stream) => {
+          videoRef.current!.srcObject = stream;
+        });
+      setDevices(d);
     });
-  }, []);
 
-  useEffect(() => {
     const t = setInterval(() => {
-      if (ref.current && camDataProcess?.current)
-        camDataProcess.current(ref.current);
+      if (videoRef.current && camDataProcessRef?.current)
+        camDataProcessRef.current(videoRef.current);
     }, 10);
-    timer.current = t;
+    timerRef.current = t;
     return () => {
-      if (timer.current) clearInterval(timer.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [camDataProcess]);
+  }, []);
 
   return (
     <>
+      <label>Select Camera</label>
       <select
         className="form-select"
         onChange={(e) => {
           navigator.mediaDevices
             .getUserMedia({
-              video: { deviceId: { exact: e.currentTarget.value } },
+              video: { deviceId: e.currentTarget.value },
             })
             .then((stream) => {
-              ref.current!.srcObject = stream;
+              videoRef.current!.srcObject = stream;
             });
         }}
-        ref={selectRef}
-      />
-      <video
-        autoPlay
-        width="100%"
-        style={{ transform: "scaleX(-1)" }}
-        ref={ref}
-      />
+      >
+        {devices.map((d, idx) => (
+          <option key={d.value} value={d.value}>
+            {idx + 1}. {d.label || "Camera"}
+          </option>
+        ))}
+      </select>
+      <div className="form-check">
+        <label className="form-check-label">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            onChange={(e) => {
+              if (e.currentTarget.checked)
+                videoRef.current!.style.transform = "scaleX(-1)";
+              else videoRef.current!.style.transform = "";
+              flipRef.current = e.currentTarget.checked;
+            }}
+          />
+          Horizontal Flip
+        </label>
+      </div>
+      <video autoPlay width="100%" ref={videoRef} />
     </>
   );
 };

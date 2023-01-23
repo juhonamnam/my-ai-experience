@@ -7,7 +7,7 @@ import { useCamData } from "../Cam";
 import { logger } from "../../logger";
 
 export const ObjectDetection = () => {
-  const { setCamDataProcess, clear } = useCamData();
+  const { setCamDataProcess, clear, flipRef } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = async (model: IObjectDetection, camData: HTMLVideoElement) => {
@@ -36,7 +36,9 @@ export const ObjectDetection = () => {
       const _width = width * h_ratio;
       const _height = height * v_ratio;
 
-      const _x = camData.clientWidth - x * h_ratio - _width;
+      const _x = flipRef.current
+        ? camData.clientWidth - x * h_ratio - _width
+        : x * h_ratio;
       const _y = y * v_ratio;
 
       ctx.beginPath();
@@ -63,7 +65,7 @@ export const ObjectDetection = () => {
         clear();
       });
     };
-  }, [clear, setCamDataProcess]);
+  }, []);
 
   return (
     <canvas

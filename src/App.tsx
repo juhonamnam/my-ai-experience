@@ -28,6 +28,7 @@ function App() {
   return (
     <div className="d-flex justify-content-center">
       <div>
+        <label>Select Model</label>
         <select
           className="form-select"
           onChange={(e) => {

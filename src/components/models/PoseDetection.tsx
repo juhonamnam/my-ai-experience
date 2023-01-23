@@ -13,7 +13,7 @@ const ADJACENT_PAIRS = util.getAdjacentPairs(MODEL);
 const SCORE_THRESHOLD = 0.3;
 
 export const PoseDetection = () => {
-  const { setCamDataProcess, clear } = useCamData();
+  const { setCamDataProcess, clear, flipRef } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = async (model: PoseDetector, camData: HTMLVideoElement) => {
@@ -44,15 +44,19 @@ export const PoseDetection = () => {
         )
           return;
 
+        const fromX = flipRef.current
+          ? camData.clientWidth - _detection.keypoints[adj[0]].x * h_ratio
+          : _detection.keypoints[adj[0]].x * h_ratio;
+        const fromY = _detection.keypoints[adj[0]].y * v_ratio;
+
+        const toX = flipRef.current
+          ? camData.clientWidth - _detection.keypoints[adj[1]].x * h_ratio
+          : _detection.keypoints[adj[1]].x * h_ratio;
+        const toY = _detection.keypoints[adj[1]].y * v_ratio;
+
         ctx.beginPath();
-        ctx.moveTo(
-          camData.clientWidth - _detection.keypoints[adj[0]].x * h_ratio,
-          _detection.keypoints[adj[0]].y * v_ratio
-        );
-        ctx.lineTo(
-          camData.clientWidth - _detection.keypoints[adj[1]].x * h_ratio,
-          _detection.keypoints[adj[1]].y * v_ratio
-        );
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
         ctx.lineWidth = 3;
         ctx.strokeStyle = "red";
         ctx.stroke();
@@ -77,7 +81,7 @@ export const PoseDetection = () => {
         clear();
       });
     };
-  }, [setCamDataProcess, clear]);
+  }, []);
 
   return (
     <canvas
