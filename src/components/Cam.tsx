@@ -88,7 +88,7 @@ export const Cam = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [camDataProcessRef]);
 
   return (
     <>

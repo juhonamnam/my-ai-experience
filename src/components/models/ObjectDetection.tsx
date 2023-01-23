@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import {
   load,
   ObjectDetection as IObjectDetection,
@@ -10,43 +10,46 @@ export const ObjectDetection = () => {
   const { setCamDataProcess, clear, flipRef } = useCamData();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const detect = async (model: IObjectDetection, camData: HTMLVideoElement) => {
-    if (!canvasRef.current) return;
+  const detect = useCallback(
+    async (model: IObjectDetection, camData: HTMLVideoElement) => {
+      if (!canvasRef.current) return;
 
-    const ctx = canvasRef.current.getContext("2d");
+      const ctx = canvasRef.current.getContext("2d");
 
-    if (!ctx) return;
+      if (!ctx) return;
 
-    canvasRef.current.width = camData.clientWidth;
-    canvasRef.current.height = camData.clientHeight;
-    const h_ratio = camData.clientWidth / camData.videoWidth;
-    const v_ratio = camData.clientHeight / camData.videoHeight;
+      canvasRef.current.width = camData.clientWidth;
+      canvasRef.current.height = camData.clientHeight;
+      const h_ratio = camData.clientWidth / camData.videoWidth;
+      const v_ratio = camData.clientHeight / camData.videoHeight;
 
-    const detection = await model.detect(camData);
+      const detection = await model.detect(camData);
 
-    detection.forEach((_detection) => {
-      const [x, y, width, height] = _detection.bbox;
-      const _class = _detection.class;
-      const color = "red";
+      detection.forEach((_detection) => {
+        const [x, y, width, height] = _detection.bbox;
+        const _class = _detection.class;
+        const color = "red";
 
-      ctx.strokeStyle = color;
-      ctx.font = "18px Arial";
-      ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.font = "18px Arial";
+        ctx.fillStyle = color;
 
-      const _width = width * h_ratio;
-      const _height = height * v_ratio;
+        const _width = width * h_ratio;
+        const _height = height * v_ratio;
 
-      const _x = flipRef.current
-        ? camData.clientWidth - x * h_ratio - _width
-        : x * h_ratio;
-      const _y = y * v_ratio;
+        const _x = flipRef.current
+          ? camData.clientWidth - x * h_ratio - _width
+          : x * h_ratio;
+        const _y = y * v_ratio;
 
-      ctx.beginPath();
-      ctx.fillText(_class, _x, _y);
-      ctx.rect(_x, _y, _width, _height);
-      ctx.stroke();
-    });
-  };
+        ctx.beginPath();
+        ctx.fillText(_class, _x, _y);
+        ctx.rect(_x, _y, _width, _height);
+        ctx.stroke();
+      });
+    },
+    [flipRef]
+  );
 
   useEffect(() => {
     const loadModel = load()
@@ -65,7 +68,7 @@ export const ObjectDetection = () => {
         clear();
       });
     };
-  }, []);
+  }, [clear, detect, setCamDataProcess]);
 
   return (
     <canvas
