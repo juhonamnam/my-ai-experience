@@ -50,6 +50,7 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
 
 export const Cam = () => {
   const ref = useRef<HTMLVideoElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
   const timer = useRef<NodeJS.Timer | null>(null);
   const { camDataProcess } = useContext(CamContext);
 
@@ -61,6 +62,17 @@ export const Cam = () => {
       .then((stream) => {
         ref.current!.srcObject = stream;
       });
+
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      devices.forEach((device) => {
+        if (device.kind === "videoinput") {
+          const option = document.createElement("option");
+          option.value = device.deviceId;
+          option.label = device.label;
+          selectRef.current?.appendChild(option);
+        }
+      });
+    });
   }, []);
 
   useEffect(() => {
@@ -75,12 +87,23 @@ export const Cam = () => {
   }, [camDataProcess]);
 
   return (
-    <video
-      autoPlay
-      width="100%"
-      style={{ transform: "scaleX(-1)" }}
-      ref={ref}
-    />
+    <>
+      <select
+        className="form-select"
+        onChange={(e) => {
+          navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: e.currentTarget.value } },
+          });
+        }}
+        ref={selectRef}
+      />
+      <video
+        autoPlay
+        width="100%"
+        style={{ transform: "scaleX(-1)" }}
+        ref={ref}
+      />
+    </>
   );
 };
 
