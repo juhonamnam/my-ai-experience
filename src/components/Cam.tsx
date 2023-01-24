@@ -56,7 +56,8 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
 
 export const Cam = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const timerRef = useRef<NodeJS.Timer | null>(null);
+  const cancelRef = useRef(false);
+  const requestRef = useRef(0);
   const { camDataProcessRef, flipRef } = useContext(CamContext);
   const [devices, setDevices] = useState<{ label: string; value: string }[]>(
     []
@@ -80,13 +81,20 @@ export const Cam = () => {
       setDevices(d);
     });
 
-    const t = setInterval(() => {
+    cancelRef.current = false;
+
+    const process = () => {
+      if (cancelRef.current) return;
       if (videoRef.current && camDataProcessRef?.current)
         camDataProcessRef.current(videoRef.current);
-    }, 10);
-    timerRef.current = t;
+
+      requestAnimationFrame(process);
+    };
+    requestRef.current = requestAnimationFrame(process);
+
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      cancelRef.current = true;
+      cancelAnimationFrame(requestRef.current);
     };
   }, [camDataProcessRef]);
 
