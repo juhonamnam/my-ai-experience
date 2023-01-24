@@ -24,11 +24,8 @@ export const PoseDetection = () => {
 
       if (!ctx) return;
 
-      canvasRef.current.width = camData.clientWidth;
-      canvasRef.current.height = camData.clientHeight;
-
-      const h_ratio = camData.clientWidth / camData.videoWidth;
-      const v_ratio = camData.clientHeight / camData.videoHeight;
+      canvasRef.current.width = camData.videoWidth;
+      canvasRef.current.height = camData.videoHeight;
 
       const detection = await model.estimatePoses(camData);
 
@@ -46,14 +43,14 @@ export const PoseDetection = () => {
             return;
 
           const fromX = flipRef.current
-            ? camData.clientWidth - _detection.keypoints[adj[0]].x * h_ratio
-            : _detection.keypoints[adj[0]].x * h_ratio;
-          const fromY = _detection.keypoints[adj[0]].y * v_ratio;
+            ? camData.videoWidth - _detection.keypoints[adj[0]].x
+            : _detection.keypoints[adj[0]].x;
+          const fromY = _detection.keypoints[adj[0]].y;
 
           const toX = flipRef.current
-            ? camData.clientWidth - _detection.keypoints[adj[1]].x * h_ratio
-            : _detection.keypoints[adj[1]].x * h_ratio;
-          const toY = _detection.keypoints[adj[1]].y * v_ratio;
+            ? camData.videoWidth - _detection.keypoints[adj[1]].x
+            : _detection.keypoints[adj[1]].x;
+          const toY = _detection.keypoints[adj[1]].y;
 
           ctx.beginPath();
           ctx.moveTo(fromX, fromY);
@@ -66,9 +63,9 @@ export const PoseDetection = () => {
         _detection.keypoints.forEach((keypoint) => {
           if (!keypoint.score || keypoint.score < SCORE_THRESHOLD) return;
           const x = flipRef.current
-            ? camData.clientWidth - keypoint.x * h_ratio
-            : keypoint.x * h_ratio;
-          const y = keypoint.y * v_ratio;
+            ? camData.videoWidth - keypoint.x
+            : keypoint.x;
+          const y = keypoint.y;
           ctx.beginPath();
           ctx.arc(x, y, 5, 0, 3 * Math.PI);
           ctx.fillStyle = "red";

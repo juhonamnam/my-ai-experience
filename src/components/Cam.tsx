@@ -73,7 +73,10 @@ export const Cam = () => {
       });
       navigator.mediaDevices
         .getUserMedia({
-          video: { deviceId: d[0].value },
+          video: {
+            deviceId: d[0].value,
+            width: { max: window.screen.availWidth },
+          },
         })
         .then((stream) => {
           videoRef.current!.srcObject = stream;
@@ -106,7 +109,10 @@ export const Cam = () => {
         onChange={(e) => {
           navigator.mediaDevices
             .getUserMedia({
-              video: { deviceId: e.currentTarget.value },
+              video: {
+                deviceId: e.currentTarget.value,
+                width: { max: window.screen.availWidth },
+              },
             })
             .then((stream) => {
               videoRef.current!.srcObject = stream;

@@ -23,10 +23,8 @@ export const HandPoseDetection = () => {
 
       if (!ctx) return;
 
-      canvasRef.current.width = camData.clientWidth;
-      canvasRef.current.height = camData.clientHeight;
-      const h_ratio = camData.clientWidth / camData.videoWidth;
-      const v_ratio = camData.clientHeight / camData.videoHeight;
+      canvasRef.current.width = camData.videoWidth;
+      canvasRef.current.height = camData.videoHeight;
 
       const detections = await model.estimateHands(camData);
 
@@ -35,10 +33,10 @@ export const HandPoseDetection = () => {
           ctx.beginPath();
           joint.forEach((idx) => {
             const x = flipRef.current
-              ? camData.clientWidth - detection.landmarks[idx][0] * h_ratio
-              : detection.landmarks[idx][0] * h_ratio;
+              ? camData.videoWidth - detection.landmarks[idx][0]
+              : detection.landmarks[idx][0];
 
-            const y = detection.landmarks[idx][1] * v_ratio;
+            const y = detection.landmarks[idx][1];
 
             if (idx === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -50,9 +48,9 @@ export const HandPoseDetection = () => {
 
         detection.landmarks.forEach((landmark) => {
           const x = flipRef.current
-            ? camData.clientWidth - landmark[0] * h_ratio
-            : landmark[0] * h_ratio;
-          const y = landmark[1] * v_ratio;
+            ? camData.videoWidth - landmark[0]
+            : landmark[0];
+          const y = landmark[1];
           ctx.beginPath();
           ctx.arc(x, y, 5, 0, 3 * Math.PI);
           ctx.fillStyle = "red";
