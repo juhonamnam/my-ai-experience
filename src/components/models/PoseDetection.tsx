@@ -59,8 +59,20 @@ export const PoseDetection = () => {
           ctx.moveTo(fromX, fromY);
           ctx.lineTo(toX, toY);
           ctx.lineWidth = 3;
-          ctx.strokeStyle = "red";
+          ctx.strokeStyle = "white";
           ctx.stroke();
+        });
+
+        _detection.keypoints.forEach((keypoint) => {
+          if (!keypoint.score || keypoint.score < SCORE_THRESHOLD) return;
+          const x = flipRef.current
+            ? camData.clientWidth - keypoint.x * h_ratio
+            : keypoint.x * h_ratio;
+          const y = keypoint.y * v_ratio;
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, 3 * Math.PI);
+          ctx.fillStyle = "red";
+          ctx.fill();
         });
       });
     },

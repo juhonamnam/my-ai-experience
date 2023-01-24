@@ -5,21 +5,21 @@ import "@tensorflow/tfjs";
 import { ImageClassification } from "./components/models/ImageClassification";
 import { ObjectDetection } from "./components/models/ObjectDetection";
 import { PoseDetection } from "./components/models/PoseDetection";
-// import { HandPoseDetection } from "./components/models/HandPoseDetection";
+import { HandPoseDetection } from "./components/models/HandPoseDetection";
 
 enum ModelType {
   None = "None",
   ImageClassification = "Image Classification",
   ObjectDetection = "Object Detection",
   PoseDetection = "Pose Detection",
-  // HandPoseDetection = "Hand Pose Detection",
+  HandPoseDetection = "Hand Pose Detection",
 }
 const renderModel: { [key in ModelType]: ReactNode } = {
   [ModelType.None]: <></>,
   [ModelType.ImageClassification]: <ImageClassification />,
   [ModelType.ObjectDetection]: <ObjectDetection />,
   [ModelType.PoseDetection]: <PoseDetection />,
-  // [ModelType.HandPoseDetection]: <HandPoseDetection />,
+  [ModelType.HandPoseDetection]: <HandPoseDetection />,
 };
 
 function App() {
