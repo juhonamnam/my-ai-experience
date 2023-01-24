@@ -134,7 +134,7 @@ export const Cam = () => {
           Horizontal Flip
         </label>
       </div>
-      <video autoPlay width="100%" ref={videoRef} />
+      <video autoPlay ref={videoRef} />
     </>
   );
 };
