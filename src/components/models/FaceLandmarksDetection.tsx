@@ -7,12 +7,14 @@ import {
 import { useCallback, useEffect, useRef } from "react";
 import { logger } from "../../logger";
 import { useCamData } from "../Cam";
+import { useLoading } from "../Loading";
 
 const MODEL = SupportedModels.MediaPipeFaceMesh;
 const ADJACENT_PAIRS = util.getAdjacentPairs(MODEL);
 
 export const FaceLandmarksDetection = () => {
   const { setCamDataProcess, clear, flipRef } = useCamData();
+  const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = useCallback(
@@ -51,28 +53,32 @@ export const FaceLandmarksDetection = () => {
   );
 
   useEffect(() => {
+    logger("Loading Start");
+    setLoading(true);
     const loadModel = createDetector(MODEL, {
       runtime: "mediapipe",
       solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh",
       refineLandmarks: false,
     })
       .then((model) => {
-        logger("load");
         setCamDataProcess((camData) => detect(model, camData));
+        logger("Loading Finished");
+        setLoading(false);
         return model;
       })
       .catch((reason) => {
         alert(reason);
+        setLoading(false);
       });
 
     return () => {
       loadModel.then((model) => {
-        logger("unload");
+        logger("Unloaded");
         model?.dispose();
         clear();
       });
     };
-  }, [clear, setCamDataProcess, detect]);
+  }, [clear, setCamDataProcess, detect, setLoading]);
 
   return (
     <canvas

@@ -6,6 +6,7 @@ import {
   SupportedModels,
   HandDetector,
 } from "@tensorflow-models/hand-pose-detection";
+import { useLoading } from "../Loading";
 
 const MODEL = SupportedModels.MediaPipeHands;
 
@@ -19,6 +20,7 @@ const FINGER_JOINTS = [
 
 export const HandPoseDetection = () => {
   const { setCamDataProcess, clear, flipRef } = useCamData();
+  const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = useCallback(
@@ -72,6 +74,8 @@ export const HandPoseDetection = () => {
   );
 
   useEffect(() => {
+    logger("Loading Start");
+    setLoading(true);
     const loadModel = createDetector(MODEL, {
       runtime: "mediapipe",
       solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/hands",
@@ -79,20 +83,22 @@ export const HandPoseDetection = () => {
     })
       .then((model) => {
         setCamDataProcess((camData) => detect(model, camData));
-        logger("load");
+        logger("Loading Finished");
+        setLoading(false);
         return model;
       })
       .catch((reason) => {
         alert(reason);
+        setLoading(false);
       });
     return () => {
       loadModel.then((model) => {
-        logger("unload");
+        logger("Unloaded");
         model?.dispose();
         clear();
       });
     };
-  }, [setCamDataProcess, clear, detect]);
+  }, [setCamDataProcess, clear, detect, setLoading]);
 
   return (
     <canvas

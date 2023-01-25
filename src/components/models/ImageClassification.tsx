@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useCamData } from "../Cam";
 import { load, MobileNet } from "@tensorflow-models/mobilenet";
 import { logger } from "../../logger";
+import { useLoading } from "../Loading";
 
 export const ImageClassification = () => {
   const { setCamDataProcess, clear } = useCamData();
+  const { setLoading } = useLoading();
   const [predictions, setPredictions] = useState<
     { className: string; probability: number }[]
   >([]);
@@ -16,21 +18,25 @@ export const ImageClassification = () => {
   };
 
   useEffect(() => {
+    logger("Loading Start");
+    setLoading(true);
     const loadModel = load()
       .then((model) => {
         setCamDataProcess((camData) => predict(model, camData));
-        logger("load");
+        logger("Load Finished");
+        setLoading(false);
       })
       .catch((reason) => {
         alert(reason);
+        setLoading(false);
       });
     return () => {
       loadModel.then(() => {
-        logger("unload");
+        logger("Unloaded");
         clear();
       });
     };
-  }, [setCamDataProcess, clear]);
+  }, [setCamDataProcess, clear, setLoading]);
 
   return (
     <>

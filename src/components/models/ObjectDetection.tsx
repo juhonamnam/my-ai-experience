@@ -5,9 +5,11 @@ import {
 } from "@tensorflow-models/coco-ssd";
 import { useCamData } from "../Cam";
 import { logger } from "../../logger";
+import { useLoading } from "../Loading";
 
 export const ObjectDetection = () => {
   const { setCamDataProcess, clear, flipRef } = useCamData();
+  const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = useCallback(
@@ -48,23 +50,27 @@ export const ObjectDetection = () => {
   );
 
   useEffect(() => {
+    logger("Loading Start");
+    setLoading(true);
     const loadModel = load()
       .then((model) => {
         setCamDataProcess((camData) => detect(model, camData));
-        logger("load");
+        logger("Loading Finished");
+        setLoading(false);
         return model;
       })
       .catch((reason) => {
         alert(reason);
+        setLoading(false);
       });
     return () => {
       loadModel.then((model) => {
-        logger("unload");
+        logger("Unloaded");
         model?.dispose();
         clear();
       });
     };
-  }, [clear, detect, setCamDataProcess]);
+  }, [clear, detect, setCamDataProcess, setLoading]);
 
   return (
     <canvas

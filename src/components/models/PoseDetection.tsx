@@ -7,6 +7,7 @@ import {
   util,
 } from "@tensorflow-models/pose-detection";
 import { logger } from "../../logger";
+import { useLoading } from "../Loading";
 
 const MODEL = SupportedModels.MoveNet;
 const ADJACENT_PAIRS = util.getAdjacentPairs(MODEL);
@@ -14,6 +15,7 @@ const SCORE_THRESHOLD = 0.3;
 
 export const PoseDetection = () => {
   const { setCamDataProcess, clear, flipRef } = useCamData();
+  const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = useCallback(
@@ -73,23 +75,27 @@ export const PoseDetection = () => {
   );
 
   useEffect(() => {
+    logger("Loading Start");
+    setLoading(true);
     const loadModel = createDetector(MODEL)
       .then((model) => {
-        logger("load");
         setCamDataProcess((camData) => detect(model, camData));
+        logger("Loading Finished");
+        setLoading(false);
         return model;
       })
       .catch((reason) => {
         alert(reason);
+        setLoading(false);
       });
     return () => {
       loadModel.then((model) => {
-        logger("unload");
+        logger("Unloaded");
         model?.dispose();
         clear();
       });
     };
-  }, [clear, detect, setCamDataProcess]);
+  }, [clear, detect, setCamDataProcess, setLoading]);
 
   return (
     <canvas

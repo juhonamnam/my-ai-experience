@@ -11,11 +11,13 @@ import {
 import { useCallback, useEffect, useRef } from "react";
 import { logger } from "../../logger";
 import { useCamData } from "../Cam";
+import { useLoading } from "../Loading";
 
 const MODEL = SupportedModels.BodyPix;
 
 export const BodySegmentation = () => {
   const { setCamDataProcess, clear, flipRef } = useCamData();
+  const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = useCallback(
@@ -46,6 +48,8 @@ export const BodySegmentation = () => {
   );
 
   useEffect(() => {
+    logger("Loading Start");
+    setLoading(true);
     const loadModel = createSegmenter(MODEL, {
       architecture: "MobileNetV1",
       outputStride: 16,
@@ -53,21 +57,23 @@ export const BodySegmentation = () => {
       quantBytes: 4,
     })
       .then((model) => {
-        logger("load");
         setCamDataProcess((camData) => detect(model, camData));
+        logger("Loading Finished");
+        setLoading(false);
         return model;
       })
       .catch((reason) => {
         alert(reason);
+        setLoading(false);
       });
     return () => {
       loadModel.then((model) => {
-        logger("unload");
+        logger("Unloaded");
         model?.dispose();
         clear();
       });
     };
-  }, [clear, setCamDataProcess, detect]);
+  }, [clear, setCamDataProcess, detect, setLoading]);
 
   return (
     <canvas
