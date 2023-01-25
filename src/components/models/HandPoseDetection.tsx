@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useCamData } from "../Cam";
 import { logger } from "../../logger";
-import { HandPose, load } from "@tensorflow-models/handpose";
+import {
+  createDetector,
+  SupportedModels,
+  HandDetector,
+} from "@tensorflow-models/hand-pose-detection";
+
+const MODEL = SupportedModels.MediaPipeHands;
 
 const FINGER_JOINTS = [
   [0, 1, 2, 3, 4],
@@ -16,7 +22,7 @@ export const HandPoseDetection = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const detect = useCallback(
-    async (model: HandPose, camData: HTMLVideoElement) => {
+    async (model: HandDetector, camData: HTMLVideoElement) => {
       if (!canvasRef.current) return;
 
       const ctx = canvasRef.current.getContext("2d");
@@ -28,15 +34,17 @@ export const HandPoseDetection = () => {
 
       const detections = await model.estimateHands(camData);
 
+      console.log(detections);
+
       detections.forEach((detection) => {
         FINGER_JOINTS.forEach((joint) => {
           ctx.beginPath();
           joint.forEach((idx) => {
             const x = flipRef.current
-              ? camData.videoWidth - detection.landmarks[idx][0]
-              : detection.landmarks[idx][0];
+              ? camData.videoWidth - detection.keypoints[idx].x
+              : detection.keypoints[idx].x;
 
-            const y = detection.landmarks[idx][1];
+            const y = detection.keypoints[idx].y;
 
             if (idx === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -46,14 +54,16 @@ export const HandPoseDetection = () => {
           ctx.stroke();
         });
 
-        detection.landmarks.forEach((landmark) => {
+        const color = detection.handedness === "Left" ? "blue" : "red";
+
+        detection.keypoints.forEach((keypoint) => {
           const x = flipRef.current
-            ? camData.videoWidth - landmark[0]
-            : landmark[0];
-          const y = landmark[1];
+            ? camData.videoWidth - keypoint.x
+            : keypoint.x;
+          const y = keypoint.y;
           ctx.beginPath();
           ctx.arc(x, y, 5, 0, 3 * Math.PI);
-          ctx.fillStyle = "red";
+          ctx.fillStyle = color;
           ctx.fill();
         });
       });
@@ -62,17 +72,23 @@ export const HandPoseDetection = () => {
   );
 
   useEffect(() => {
-    const loadModel = load()
+    const loadModel = createDetector(MODEL, {
+      runtime: "mediapipe",
+      solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/hands",
+      modelType: "full",
+    })
       .then((model) => {
         setCamDataProcess((camData) => detect(model, camData));
         logger("load");
+        return model;
       })
       .catch((reason) => {
         alert(reason);
       });
     return () => {
-      loadModel.then(() => {
+      loadModel.then((model) => {
         logger("unload");
+        model?.dispose();
         clear();
       });
     };

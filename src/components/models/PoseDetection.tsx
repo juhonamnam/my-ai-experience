@@ -27,12 +27,12 @@ export const PoseDetection = () => {
       canvasRef.current.width = camData.videoWidth;
       canvasRef.current.height = camData.videoHeight;
 
-      const detection = await model.estimatePoses(camData);
+      const detections = await model.estimatePoses(camData);
 
-      detection.forEach((_detection) => {
+      detections.forEach((detection) => {
         ADJACENT_PAIRS.forEach((adj) => {
-          const from = _detection.keypoints[adj[0]];
-          const to = _detection.keypoints[adj[1]];
+          const from = detection.keypoints[adj[0]];
+          const to = detection.keypoints[adj[1]];
 
           if (
             !from.score ||
@@ -42,15 +42,11 @@ export const PoseDetection = () => {
           )
             return;
 
-          const fromX = flipRef.current
-            ? camData.videoWidth - _detection.keypoints[adj[0]].x
-            : _detection.keypoints[adj[0]].x;
-          const fromY = _detection.keypoints[adj[0]].y;
+          const fromX = flipRef.current ? camData.videoWidth - from.x : from.x;
+          const fromY = from.y;
 
-          const toX = flipRef.current
-            ? camData.videoWidth - _detection.keypoints[adj[1]].x
-            : _detection.keypoints[adj[1]].x;
-          const toY = _detection.keypoints[adj[1]].y;
+          const toX = flipRef.current ? camData.videoWidth - to.x : to.x;
+          const toY = detection.keypoints[adj[1]].y;
 
           ctx.beginPath();
           ctx.moveTo(fromX, fromY);
@@ -60,7 +56,7 @@ export const PoseDetection = () => {
           ctx.stroke();
         });
 
-        _detection.keypoints.forEach((keypoint) => {
+        detection.keypoints.forEach((keypoint) => {
           if (!keypoint.score || keypoint.score < SCORE_THRESHOLD) return;
           const x = flipRef.current
             ? camData.videoWidth - keypoint.x
