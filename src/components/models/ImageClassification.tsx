@@ -7,14 +7,15 @@ import { useLoading } from "../Loading";
 export const ImageClassification = () => {
   const { setCamDataProcess, clear } = useCamData();
   const { setLoading } = useLoading();
-  const [predictions, setPredictions] = useState<
-    { className: string; probability: number }[]
-  >([]);
+  const [result, setResult] = useState<{
+    predictions: { className: string; probability: number }[];
+    width: number;
+  }>({ predictions: [], width: 0 });
 
   const predict = async (model: MobileNet, camData: HTMLVideoElement) => {
-    const prediction = await model.classify(camData);
+    const predictions = await model.classify(camData);
 
-    setPredictions(prediction);
+    setResult({ predictions, width: camData.videoWidth });
   };
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export const ImageClassification = () => {
     const loadModel = load()
       .then((model) => {
         setCamDataProcess((camData) => predict(model, camData));
-        logger("Load Finished");
+        logger("Loading Finished");
         setLoading(false);
       })
       .catch((reason) => {
@@ -40,8 +41,8 @@ export const ImageClassification = () => {
 
   return (
     <>
-      {predictions.map((p) => (
-        <div key={p.className}>
+      {result.predictions.map((p) => (
+        <div key={p.className} style={{ width: result.width }}>
           <div>{p.className}</div>
           <div className="progress">
             <div

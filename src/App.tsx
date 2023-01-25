@@ -48,7 +48,7 @@ function App() {
             </option>
           ))}
         </select>
-        <div style={{ position: "relative" }}>
+        <div>
           <Cam.CamWrapper>
             <Cam.Cam />
             {renderModel[modelType]}
