@@ -3,11 +3,9 @@ import {
   BodySegmenter,
   SupportedModels,
   bodyPixMaskValueToRainbowColor,
-} from "@tensorflow-models/body-segmentation";
-import {
   drawPixelatedMask,
   toColoredMask,
-} from "@tensorflow-models/body-segmentation/dist/shared/calculators/render_util";
+} from "@tensorflow-models/body-segmentation";
 import { useCallback, useEffect, useRef } from "react";
 import { logger } from "../../logger";
 import { useCamData } from "../Cam";
