@@ -36,8 +36,6 @@ export const HandPoseDetection = () => {
 
       const detections = await model.estimateHands(camData);
 
-      console.log(detections);
-
       detections.forEach((detection) => {
         FINGER_JOINTS.forEach((joint) => {
           ctx.beginPath();
