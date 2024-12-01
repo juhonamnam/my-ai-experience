@@ -3,30 +3,30 @@ import Cam from "./components/Cam";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
-import { ImageClassification } from "./components/models/ImageClassification";
-import { ObjectDetection } from "./components/models/ObjectDetection";
-import { PoseDetection } from "./components/models/PoseDetection";
-import { HandPoseDetection } from "./components/models/HandPoseDetection";
-import { BodySegmentation } from "./components/models/BodySegmentation";
-import { FaceLandmarksDetection } from "./components/models/FaceLandmarksDetection";
+import { MobileNetV3Large } from "./components/models/MobileNetV3Large";
+// import { ObjectDetection } from "./components/models/ObjectDetection";
+// import { PoseDetection } from "./components/models/PoseDetection";
+// import { HandPoseDetection } from "./components/models/HandPoseDetection";
+// import { BodySegmentation } from "./components/models/BodySegmentation";
+// import { FaceLandmarksDetection } from "./components/models/FaceLandmarksDetection";
 
 enum ModelType {
   None = "None",
-  ImageClassification = "Image Classification",
-  ObjectDetection = "Object Detection",
-  PoseDetection = "Pose Detection",
-  HandPoseDetection = "Hand Pose Detection",
-  BodySegmentation = "Body Segmentation",
-  FaceLandmarksDetection = "Face Landmarks Detection",
+  MobileNetV3Large = "MobileNetV3-Large",
+  // ObjectDetection = "Object Detection",
+  // PoseDetection = "Pose Detection",
+  // HandPoseDetection = "Hand Pose Detection",
+  // BodySegmentation = "Body Segmentation",
+  // FaceLandmarksDetection = "Face Landmarks Detection",
 }
 const renderModel: { [key in ModelType]: ReactNode } = {
   [ModelType.None]: <></>,
-  [ModelType.ImageClassification]: <ImageClassification />,
-  [ModelType.ObjectDetection]: <ObjectDetection />,
-  [ModelType.PoseDetection]: <PoseDetection />,
-  [ModelType.HandPoseDetection]: <HandPoseDetection />,
-  [ModelType.BodySegmentation]: <BodySegmentation />,
-  [ModelType.FaceLandmarksDetection]: <FaceLandmarksDetection />,
+  [ModelType.MobileNetV3Large]: <MobileNetV3Large />,
+  // [ModelType.ObjectDetection]: <ObjectDetection />,
+  // [ModelType.PoseDetection]: <PoseDetection />,
+  // [ModelType.HandPoseDetection]: <HandPoseDetection />,
+  // [ModelType.BodySegmentation]: <BodySegmentation />,
+  // [ModelType.FaceLandmarksDetection]: <FaceLandmarksDetection />,
 };
 
 function App() {
