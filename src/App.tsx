@@ -4,7 +4,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
 import { MobileNetV3Large } from "./components/models/MobileNetV3Large";
-// import { ObjectDetection } from "./components/models/ObjectDetection";
 // import { PoseDetection } from "./components/models/PoseDetection";
 // import { HandPoseDetection } from "./components/models/HandPoseDetection";
 // import { BodySegmentation } from "./components/models/BodySegmentation";
@@ -13,7 +12,6 @@ import { MobileNetV3Large } from "./components/models/MobileNetV3Large";
 enum ModelType {
   None = "None",
   MobileNetV3Large = "MobileNetV3-Large",
-  // ObjectDetection = "Object Detection",
   // PoseDetection = "Pose Detection",
   // HandPoseDetection = "Hand Pose Detection",
   // BodySegmentation = "Body Segmentation",

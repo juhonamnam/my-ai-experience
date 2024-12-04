@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useCamData } from "../../Cam";
-import { logger } from "../../../logger";
-import { useLoading } from "../../Loading";
+import { useCamData } from "../Cam";
+import { logger } from "../logger";
+import { useLoading } from "../Loading";
 import * as tf from "@tensorflow/tfjs";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
-import { IMAGENET_CLASSES } from "../../imagenetClasses";
+import { IMAGENET_CLASSES } from "../imagenetClasses";
 
 const MODEL_URL = "/models/mobilenetv3large/model.json";
 const IMAGE_SIZE = [224, 224] as const;
@@ -68,14 +68,16 @@ export const MobileNetV3Large = () => {
         setCamDataProcess((camData) => predict(model, camData));
         logger("Loading Finished");
         setLoading(false);
+        return model
       })
       .catch((reason) => {
         alert(reason);
         setLoading(false);
       });
     return () => {
-      loadModel.then(() => {
+      loadModel.then((model) => {
         logger("Unloaded");
+        model?.dispose();
         clear();
       });
     };
