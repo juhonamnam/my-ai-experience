@@ -25,13 +25,19 @@ export const MobileNetV3Large = () => {
         .fromPixels(camData)
         .resizeNearestNeighbor([IMAGE_SIZE[0], IMAGE_SIZE[1]])
         .toFloat()
+        .mul(1 / 255.0)
         .expandDims();
 
-      const result = model.predict(tensor) as tf.Tensor2D;
+      const logits1001 = model.predict(tensor) as tf.Tensor2D;
+
+      const result = tf.slice(logits1001, [0, 1], [-1, 1000]);
+
       return result;
     });
 
-    const values = await result.data();
+    const softmax = tf.softmax(result);
+    const values = await softmax.data();
+    softmax.dispose();
 
     const valuesAndIndices = [];
     for (let i = 0; i < values.length; i++) {
@@ -68,7 +74,7 @@ export const MobileNetV3Large = () => {
         setCamDataProcess((camData) => predict(model, camData));
         logger("Loading Finished");
         setLoading(false);
-        return model
+        return model;
       })
       .catch((reason) => {
         alert(reason);
