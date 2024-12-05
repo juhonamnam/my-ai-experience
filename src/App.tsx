@@ -32,7 +32,6 @@ const renderModel: { [key in ModelType]: ReactNode } = {
   [ModelType.MobileNetV3Large]: <MobileNetV3Large />,
   [ModelType.MobileNetV3Small]: <MobileNetV3Small />,
   [ModelType.SSDLiteMobileNetV2]: <SSDLiteMobileNetV2 />,
-  // [ModelType.ObjectDetection]: <ObjectDetection />,
   // [ModelType.PoseDetection]: <PoseDetection />,
   // [ModelType.HandPoseDetection]: <HandPoseDetection />,
   // [ModelType.BodySegmentation]: <BodySegmentation />,
@@ -58,12 +57,13 @@ function App() {
             </option>
           ))}
         </select>
-        <div style={{ position: "relative" }}>
-          <Cam.CamWrapper>
+        <Cam.CamWrapper>
+          <div className="position-relative">
             <Cam.Cam />
             {renderModel[modelType]}
-          </Cam.CamWrapper>
-        </div>
+          </div>
+          <Cam.CamPredictionSpeed />
+        </Cam.CamWrapper>
       </div>
     </div>
   );

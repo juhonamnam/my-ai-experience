@@ -11,7 +11,7 @@ const IMAGE_SIZE = [224, 224] as const;
 const TOPK = 3;
 
 export const MobileNetV3Small = () => {
-  const { setCamDataProcess, clear } = useCamData();
+  const { setCamDataHandler, clear } = useCamData();
   const { setLoading } = useLoading();
   const [predictions, setPredictions] = useState<
     {
@@ -71,7 +71,7 @@ export const MobileNetV3Small = () => {
     setLoading(true);
     const loadModel = loadGraphModel(MODEL_URL)
       .then((model) => {
-        setCamDataProcess((camData) => predict(model, camData));
+        setCamDataHandler((camData) => predict(model, camData));
         logger("Loading Finished");
         setLoading(false);
         return model;
@@ -87,7 +87,7 @@ export const MobileNetV3Small = () => {
         clear();
       });
     };
-  }, [setCamDataProcess, clear, setLoading]);
+  }, [setCamDataHandler, clear, setLoading]);
 
   return (
     <>

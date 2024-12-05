@@ -16,7 +16,7 @@ const COLOR = "red";
 const FONT = "18px Arial";
 
 export const SSDLiteMobileNetV2 = () => {
-  const { setCamDataProcess, clear, flipRef } = useCamData();
+  const { setCamDataHandler, clear, flipRef } = useCamData();
   const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -129,7 +129,7 @@ export const SSDLiteMobileNetV2 = () => {
     setLoading(true);
     const loadModel = loadGraphModel(MODEL_URL)
       .then((model) => {
-        setCamDataProcess((camData) => predict(model, camData));
+        setCamDataHandler((camData) => predict(model, camData));
         logger("Loading Finished");
         setLoading(false);
         return model;
@@ -145,17 +145,7 @@ export const SSDLiteMobileNetV2 = () => {
         clear();
       });
     };
-  }, [setCamDataProcess, clear, setLoading, predict]);
+  }, [setCamDataHandler, clear, setLoading, predict]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute",
-        width: "100%",
-        left: 0,
-        right: 0,
-      }}
-    />
-  );
+  return <canvas className="position-absolute end-0" ref={canvasRef} />;
 };

@@ -8,45 +8,49 @@ import {
   useState,
 } from "react";
 
-type CamDataProcess = (input: HTMLVideoElement) => Promise<void>;
-type SetCamDataProcess = (input: CamDataProcess) => void;
-type ClearCamDataProcess = () => void;
+type CamDataHandler = (input: HTMLVideoElement) => Promise<void>;
+type SetCamDataHandler = (cameraHandler: CamDataHandler) => void;
+type Clear = () => void;
 
 const CamContext = createContext<{
   flipRef: MutableRefObject<boolean>;
-  camDataProcessRef: MutableRefObject<CamDataProcess | null>;
-  setCamDataProcess: SetCamDataProcess;
-  clear: ClearCamDataProcess;
+  camDataHandlerRef: MutableRefObject<CamDataHandler | null>;
+  setCamDataHandler: SetCamDataHandler;
+  clear: Clear;
+  predictCountRef: MutableRefObject<number>;
 }>({
   flipRef: { current: false },
-  camDataProcessRef: { current: null },
-  setCamDataProcess: () => {},
+  camDataHandlerRef: { current: null },
+  setCamDataHandler: () => {},
   clear: () => {},
+  predictCountRef: { current: 0 },
 });
 
 export const useCamData = () => {
-  const { setCamDataProcess, clear, flipRef } = useContext(CamContext);
-  return { setCamDataProcess, clear, flipRef };
+  const { setCamDataHandler, clear, flipRef } = useContext(CamContext);
+  return { setCamDataHandler, clear, flipRef };
 };
 
 export const CamWrapper = ({ children }: PropsWithChildren) => {
-  const camDataProcessRef = useRef<CamDataProcess | null>(null);
+  const camDataHandlerRef = useRef<CamDataHandler | null>(null);
+  const predictCountRef = useRef(0);
   const flipRef = useRef(false);
-  const setCamDataProcess: SetCamDataProcess = (p) => {
-    camDataProcessRef.current = p;
+  const setCamDataHandler: SetCamDataHandler = (p) => {
+    camDataHandlerRef.current = p;
   };
 
-  const clear: ClearCamDataProcess = () => {
-    camDataProcessRef.current = null;
+  const clear: Clear = () => {
+    camDataHandlerRef.current = null;
   };
 
   return (
     <CamContext.Provider
       value={{
         flipRef,
-        camDataProcessRef,
-        setCamDataProcess,
+        camDataHandlerRef,
+        setCamDataHandler,
         clear,
+        predictCountRef,
       }}
     >
       {children}
@@ -57,8 +61,8 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
 export const Cam = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cancelRef = useRef(false);
-  const requestRef = useRef(0);
-  const { camDataProcessRef, flipRef } = useContext(CamContext);
+  const { camDataHandlerRef, flipRef, predictCountRef } =
+    useContext(CamContext);
   const [devices, setDevices] = useState<{ label: string; value: string }[]>(
     [],
   );
@@ -86,20 +90,26 @@ export const Cam = () => {
 
     cancelRef.current = false;
 
-    const process = async () => {
-      if (cancelRef.current) return;
-      if (videoRef.current && camDataProcessRef?.current)
-        await camDataProcessRef.current(videoRef.current);
+    let frameId = 0;
 
-      requestRef.current = requestAnimationFrame(process);
+    const handle = async () => {
+      if (cancelRef.current) return;
+      if (videoRef.current && camDataHandlerRef?.current) {
+        await camDataHandlerRef.current(videoRef.current);
+        predictCountRef.current++;
+      } else {
+        predictCountRef.current = 0;
+      }
+
+      frameId = requestAnimationFrame(handle);
     };
-    requestRef.current = requestAnimationFrame(process);
+    frameId = requestAnimationFrame(handle);
 
     return () => {
       cancelRef.current = true;
-      cancelAnimationFrame(requestRef.current);
+      cancelAnimationFrame(frameId);
     };
-  }, [camDataProcessRef]);
+  }, [camDataHandlerRef, predictCountRef]);
 
   return (
     <>
@@ -145,6 +155,24 @@ export const Cam = () => {
   );
 };
 
-const exportDefault = { useCamData, CamWrapper, Cam };
+export const CamPredictionSpeed = () => {
+  const [fps, setFps] = useState(0);
+  const { predictCountRef } = useContext(CamContext);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFps(predictCountRef.current);
+      predictCountRef.current = 0;
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [predictCountRef]);
+
+  return <div className="mt-1">Prediction Speed: {fps} FPS</div>;
+};
+
+const exportDefault = { useCamData, CamWrapper, Cam, CamPredictionSpeed };
 
 export default exportDefault;
