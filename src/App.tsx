@@ -7,6 +7,7 @@ import { MobileNetV1 } from "./components/models/MobileNetV1";
 import { MobileNetV2 } from "./components/models/MobileNetV2";
 import { MobileNetV3Large } from "./components/models/MobileNetV3Large";
 import { MobileNetV3Small } from "./components/models/MobileNetV3Small";
+import { SSDLiteMobileNetV2 } from "./components/models/SSDLiteMobileNetV2";
 // import { PoseDetection } from "./components/models/PoseDetection";
 // import { HandPoseDetection } from "./components/models/HandPoseDetection";
 // import { BodySegmentation } from "./components/models/BodySegmentation";
@@ -18,6 +19,7 @@ enum ModelType {
   MobileNetV2 = "MobileNetV2",
   MobileNetV3Large = "MobileNetV3-Large",
   MobileNetV3Small = "MobileNetV3-Small",
+  SSDLiteMobileNetV2 = "SSDLite MobileNetV2",
   // PoseDetection = "Pose Detection",
   // HandPoseDetection = "Hand Pose Detection",
   // BodySegmentation = "Body Segmentation",
@@ -29,6 +31,7 @@ const renderModel: { [key in ModelType]: ReactNode } = {
   [ModelType.MobileNetV2]: <MobileNetV2 />,
   [ModelType.MobileNetV3Large]: <MobileNetV3Large />,
   [ModelType.MobileNetV3Small]: <MobileNetV3Small />,
+  [ModelType.SSDLiteMobileNetV2]: <SSDLiteMobileNetV2 />,
   // [ModelType.ObjectDetection]: <ObjectDetection />,
   // [ModelType.PoseDetection]: <PoseDetection />,
   // [ModelType.HandPoseDetection]: <HandPoseDetection />,

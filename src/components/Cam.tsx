@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-type CamDataProcess = (input: HTMLVideoElement) => void;
+type CamDataProcess = (input: HTMLVideoElement) => Promise<void>;
 type SetCamDataProcess = (input: CamDataProcess) => void;
 type ClearCamDataProcess = () => void;
 
@@ -60,7 +60,7 @@ export const Cam = () => {
   const requestRef = useRef(0);
   const { camDataProcessRef, flipRef } = useContext(CamContext);
   const [devices, setDevices] = useState<{ label: string; value: string }[]>(
-    []
+    [],
   );
 
   useEffect(() => {
@@ -86,12 +86,12 @@ export const Cam = () => {
 
     cancelRef.current = false;
 
-    const process = () => {
+    const process = async () => {
       if (cancelRef.current) return;
       if (videoRef.current && camDataProcessRef?.current)
-        camDataProcessRef.current(videoRef.current);
+        await camDataProcessRef.current(videoRef.current);
 
-      requestAnimationFrame(process);
+      requestRef.current = requestAnimationFrame(process);
     };
     requestRef.current = requestAnimationFrame(process);
 
