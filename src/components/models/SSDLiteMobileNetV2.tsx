@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useCamData } from "../Cam";
+import { useCamData } from "../cam";
 import { logger } from "../logger";
 import { useLoading } from "../Loading";
 import * as tf from "@tensorflow/tfjs";

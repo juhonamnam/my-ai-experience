@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import Cam from "./components/Cam";
+import Cam from "./components/cam";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
