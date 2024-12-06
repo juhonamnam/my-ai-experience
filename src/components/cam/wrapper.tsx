@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { CamContext } from "./context";
+import { camLocalStorage } from "./localStorage";
 import { CamDataHandler, SetCamDataHandler, Clear } from "./type";
 
 const wait = (ms: number) =>
@@ -20,7 +21,7 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
   const [devices, setDevices] = useState<{ label: string; value: string }[]>(
     [],
   );
-  const flipRef = useRef(false);
+  const flipRef = useRef(camLocalStorage.getFlip());
   const setCamDataHandler: SetCamDataHandler = (p) => {
     camDataHandlerRef.current = p;
   };
@@ -39,6 +40,11 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
           d.push({ value: device.deviceId, label: device.label });
         }
       });
+      let selectedDevice = camLocalStorage.getSelectedDeviceId();
+      if (!d.find((device) => device.value === selectedDevice)) {
+        selectedDevice = d[0]?.value;
+        camLocalStorage.setSelectedDeviceId(selectedDevice);
+      }
       navigator.mediaDevices
         .getUserMedia({
           video: {
@@ -50,6 +56,10 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
         });
       setDevices(d);
     });
+
+    if (flipRef.current) {
+      videoRef.current.style.transform = "scaleX(-1)";
+    }
 
     let unmounted = false;
 

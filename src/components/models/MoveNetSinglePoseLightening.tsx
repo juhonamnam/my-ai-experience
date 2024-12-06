@@ -86,7 +86,6 @@ export const MoveNetSinglePoseLightening = () => {
     setLoading(true);
     const loadModel = loadGraphModel(MODEL_URL)
       .then((model) => {
-        logger(model);
         setCamDataHandler((camData) => predict(model, camData));
         logger("Loading Finished");
         setLoading(false);

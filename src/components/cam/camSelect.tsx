@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { CamContext } from "./context";
+import { camLocalStorage } from "./localStorage";
 
 export const CamSelect = () => {
   const { devices, videoRef, flipRef } = useContext(CamContext);
@@ -18,6 +19,7 @@ export const CamSelect = () => {
             })
             .then((stream) => {
               videoRef.current.srcObject = stream;
+              camLocalStorage.setSelectedDeviceId(e.currentTarget.value);
             });
         }}
       >
@@ -32,11 +34,14 @@ export const CamSelect = () => {
           <input
             className="form-check-input"
             type="checkbox"
+            defaultChecked={flipRef.current}
             onChange={(e) => {
               if (e.currentTarget.checked)
                 videoRef.current.style.transform = "scaleX(-1)";
               else videoRef.current.style.transform = "";
               flipRef.current = e.currentTarget.checked;
+
+              camLocalStorage.setFlip(e.currentTarget.checked);
             }}
           />
           Horizontal Flip
