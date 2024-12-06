@@ -47,6 +47,8 @@ export const SSDLiteMobileNetV2 = () => {
 
       const ctx = canvasRef.current.getContext("2d");
 
+      if (!ctx) return;
+
       const filtered_boxes: number[] = [];
       const filtered_classes = [];
       const filtered_scores: number[] = [];
@@ -109,16 +111,14 @@ export const SSDLiteMobileNetV2 = () => {
 
         const classIndex = filtered_classes[indexes[i]] + 1;
 
-        if (ctx) {
-          ctx.beginPath();
-          ctx.rect(xMin, yMin, xMax - xMin, yMax - yMin);
-          ctx.lineWidth = LINE_WIDTH;
-          ctx.strokeStyle = COLOR;
-          ctx.fillStyle = COLOR;
-          ctx.stroke();
-          ctx.font = FONT;
-          ctx.fillText(OBJECT_DETECTION_CLASSES[classIndex], xMin, yMin);
-        }
+        ctx.beginPath();
+        ctx.rect(xMin, yMin, xMax - xMin, yMax - yMin);
+        ctx.lineWidth = LINE_WIDTH;
+        ctx.strokeStyle = COLOR;
+        ctx.fillStyle = COLOR;
+        ctx.stroke();
+        ctx.font = FONT;
+        ctx.fillText(OBJECT_DETECTION_CLASSES[classIndex], xMin, yMin);
       }
     },
     [flipRef],
