@@ -42,29 +42,30 @@ function App() {
   const [modelType, setModelType] = useState<ModelType>(ModelType.None);
 
   return (
-    <div className="d-flex justify-content-center">
-      <div>
-        <label>Select Model</label>
-        <select
-          className="form-select"
-          onChange={(e) => {
-            setModelType(e.currentTarget.value as ModelType);
-          }}
-        >
-          {Object.values(ModelType).map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        <Cam.CamWrapper>
+    <div className="d-flex justify-content-center container">
+      <Cam.CamWrapper>
+        <div>
+          <label>Select Model</label>
+          <select
+            className="form-select"
+            onChange={(e) => {
+              setModelType(e.currentTarget.value as ModelType);
+            }}
+          >
+            {Object.values(ModelType).map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <Cam.CamSelect />
           <div className="position-relative">
             <Cam.Cam />
             {renderModel[modelType]}
           </div>
           <Cam.CamPredictionSpeed />
-        </Cam.CamWrapper>
-      </div>
+        </div>
+      </Cam.CamWrapper>
     </div>
   );
 }

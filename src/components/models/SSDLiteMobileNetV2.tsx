@@ -42,8 +42,8 @@ export const SSDLiteMobileNetV2 = () => {
         return;
       }
 
-      canvasRef.current.width = camData.videoWidth;
-      canvasRef.current.height = camData.videoHeight;
+      canvasRef.current.width = camData.clientWidth;
+      canvasRef.current.height = camData.clientHeight;
 
       const ctx = canvasRef.current.getContext("2d");
 
@@ -96,16 +96,16 @@ export const SSDLiteMobileNetV2 = () => {
       indexesTensor.dispose();
 
       for (let i = 0; i < indexes.length; i++) {
-        const yMin = filtered_boxes[indexes[i] * 4] * camData.videoHeight;
+        const yMin = filtered_boxes[indexes[i] * 4] * camData.clientHeight;
         const xMin =
           (flipRef.current
             ? 1 - filtered_boxes[indexes[i] * 4 + 3]
-            : filtered_boxes[indexes[i] * 4 + 1]) * camData.videoWidth;
-        const yMax = filtered_boxes[indexes[i] * 4 + 2] * camData.videoHeight;
+            : filtered_boxes[indexes[i] * 4 + 1]) * camData.clientWidth;
+        const yMax = filtered_boxes[indexes[i] * 4 + 2] * camData.clientHeight;
         const xMax =
           (flipRef.current
             ? 1 - filtered_boxes[indexes[i] * 4 + 1]
-            : filtered_boxes[indexes[i] * 4 + 3]) * camData.videoWidth;
+            : filtered_boxes[indexes[i] * 4 + 3]) * camData.clientWidth;
 
         const classIndex = filtered_classes[indexes[i]] + 1;
 
@@ -147,5 +147,5 @@ export const SSDLiteMobileNetV2 = () => {
     };
   }, [setCamDataHandler, clear, setLoading, predict]);
 
-  return <canvas className="position-absolute end-0" ref={canvasRef} />;
+  return <canvas className="position-absolute end-0 top-0" ref={canvasRef} />;
 };
