@@ -17,20 +17,23 @@ const CamContext = createContext<{
   camDataHandlerRef: MutableRefObject<CamDataHandler | null>;
   setCamDataHandler: SetCamDataHandler;
   clear: Clear;
-  predictCountRef: MutableRefObject<number>;
+  predictCountRef: MutableRefObject<number | null>;
   videoRef: MutableRefObject<HTMLVideoElement>;
   devices: { label: string; value: string }[];
-  setDevices: (devices: { label: string; value: string }[]) => void;
+  errorMessage: string | null;
 }>({
   flipRef: { current: false },
   camDataHandlerRef: { current: null },
   setCamDataHandler: () => {},
   clear: () => {},
-  predictCountRef: { current: 0 },
+  predictCountRef: { current: null },
   videoRef: { current: {} as HTMLVideoElement },
   devices: [],
-  setDevices: () => {},
+  errorMessage: null,
 });
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export const useCamData = () => {
   const { setCamDataHandler, clear, flipRef } = useContext(CamContext);
@@ -39,7 +42,7 @@ export const useCamData = () => {
 
 export const CamWrapper = ({ children }: PropsWithChildren) => {
   const camDataHandlerRef = useRef<CamDataHandler | null>(null);
-  const predictCountRef = useRef(0);
+  const predictCountRef = useRef(null as number | null);
   const videoRef = useRef<HTMLVideoElement>(
     null,
   ) as MutableRefObject<HTMLVideoElement>;
@@ -54,6 +57,8 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
   const clear: Clear = () => {
     camDataHandlerRef.current = null;
   };
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
@@ -75,28 +80,37 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
       setDevices(d);
     });
 
-    let canceled = false;
+    let unmounted = false;
 
     let frameId = 0;
 
     const handle = async () => {
-      if (canceled) return;
-      if (videoRef.current && camDataHandlerRef?.current) {
-        await camDataHandlerRef.current(videoRef.current);
-        predictCountRef.current++;
+      if (unmounted) return;
+      if (camDataHandlerRef?.current) {
+        try {
+          await camDataHandlerRef.current(videoRef.current);
+          if (predictCountRef.current === null) predictCountRef.current = 1;
+          else predictCountRef.current++;
+          setErrorMessage(null);
+        } catch (e) {
+          predictCountRef.current = null;
+          console.error(e);
+          if (e instanceof Error) setErrorMessage(e.message);
+          else setErrorMessage(String(e));
+          await wait(1000);
+        }
       } else {
-        predictCountRef.current = 0;
+        predictCountRef.current = null;
       }
-
       frameId = requestAnimationFrame(handle);
     };
     frameId = requestAnimationFrame(handle);
 
     return () => {
-      canceled = true;
+      unmounted = true;
       cancelAnimationFrame(frameId);
     };
-  }, [camDataHandlerRef, predictCountRef, videoRef, setDevices]);
+  }, []);
 
   return (
     <CamContext.Provider
@@ -108,7 +122,7 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
         predictCountRef,
         videoRef,
         devices,
-        setDevices,
+        errorMessage,
       }}
     >
       {children}
@@ -167,22 +181,34 @@ export const CamSelect = () => {
   );
 };
 
-export const CamPredictionSpeed = () => {
-  const [fps, setFps] = useState(0);
-  const { predictCountRef } = useContext(CamContext);
+export const CamStatus = () => {
+  const [fps, setFps] = useState<number | null>(null);
+  const { predictCountRef, errorMessage, camDataHandlerRef } =
+    useContext(CamContext);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFps(predictCountRef.current);
-      predictCountRef.current = 0;
+      if (predictCountRef.current === null) {
+        setFps(null);
+      } else {
+        setFps(predictCountRef.current);
+        predictCountRef.current = 0;
+      }
     }, 1000);
 
     return () => {
       clearInterval(interval);
     };
-  }, [predictCountRef]);
+  }, [predictCountRef, camDataHandlerRef]);
 
-  return <div className="mt-1">Prediction Speed: {fps} FPS</div>;
+  return (
+    <div className="mt-1">
+      {fps !== null && <div>Prediction Speed: {fps} FPS</div>}
+      {errorMessage !== null && (
+        <div className="text-danger">Error: {errorMessage}</div>
+      )}
+    </div>
+  );
 };
 
 const exportDefault = {
@@ -190,7 +216,7 @@ const exportDefault = {
   CamWrapper,
   Cam,
   CamSelect,
-  CamPredictionSpeed,
+  CamStatus,
 };
 
 export default exportDefault;

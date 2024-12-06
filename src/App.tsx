@@ -63,7 +63,7 @@ function App() {
             <Cam.Cam />
             {renderModel[modelType]}
           </div>
-          <Cam.CamPredictionSpeed />
+          <Cam.CamStatus />
         </div>
       </Cam.CamWrapper>
     </div>
