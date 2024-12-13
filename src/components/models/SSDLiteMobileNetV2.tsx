@@ -21,7 +21,7 @@ export const SSDLiteMobileNetV2 = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const predict = useCallback(
-    async (model: any, camData: HTMLVideoElement) => {
+    async (model: tf.GraphModel, camData: HTMLVideoElement) => {
       const tensor = tf.tidy(() => {
         const tensor = tf.browser
           .fromPixels(camData)
@@ -30,7 +30,7 @@ export const SSDLiteMobileNetV2 = () => {
         return tensor;
       });
 
-      const result = await model.predictAsync(tensor);
+      const result = (await model.predictAsync(tensor)) as tf.Tensor[];
       tensor.dispose();
 
       const scores = (await result[0].data()) as Float32Array;

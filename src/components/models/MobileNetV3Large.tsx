@@ -19,7 +19,7 @@ export const MobileNetV3Large = () => {
       probability: number;
     }[]
   >([]);
-  const predict = async (model: any, camData: HTMLVideoElement) => {
+  const predict = async (model: tf.GraphModel, camData: HTMLVideoElement) => {
     const result = tf.tidy(() => {
       const tensor = tf.browser
         .fromPixels(camData)

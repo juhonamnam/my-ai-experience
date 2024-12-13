@@ -3,7 +3,7 @@ import { useCamData } from "../cam";
 import { logger } from "../logger";
 import { useLoading } from "../Loading";
 import * as tf from "@tensorflow/tfjs";
-import { GraphModel, loadGraphModel } from "@tensorflow/tfjs-converter";
+import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import { getSSDAnchors, SSDAnchor } from "../ssdAnchors";
 import { MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS } from "../mediapipeConnectedKeypointsPairs";
 
@@ -16,7 +16,6 @@ const DETECTION_SCORE_THRESHOLD = 0.5;
 const DETECTION_BOXES = 2016;
 const DETECTION_FEATURES = 18;
 const DETECTION_KEYPOINTS_IN_USE = [0, 2];
-const SCORE_CLIPPING_THRESH = 100.0;
 const HANDS_NUM = 2;
 
 const LANDMARK_IMAGE_SIZE = [224, 224] as const;
@@ -51,8 +50,8 @@ export const MediaPipeHandPoseFull = () => {
 
   const predict = useCallback(
     async (
-      detectionModel: GraphModel,
-      landmarkModel: GraphModel,
+      detectionModel: tf.GraphModel,
+      landmarkModel: tf.GraphModel,
       ssdAnchors: SSDAnchor[],
       camData: HTMLVideoElement,
     ) => {
@@ -71,10 +70,7 @@ export const MediaPipeHandPoseFull = () => {
       const result = tf.tidy(() => {
         const result = detectionModel.predict(tensor) as tf.Tensor3D;
 
-        const scores = result
-          .slice([0, 0, 0], [-1, -1, 1])
-          .clipByValue(-SCORE_CLIPPING_THRESH, SCORE_CLIPPING_THRESH)
-          .sigmoid();
+        const scores = result.slice([0, 0, 0], [-1, -1, 1]).sigmoid();
         const features = result.slice([0, 0, 1], [-1, -1, -1]);
 
         return [scores, features];

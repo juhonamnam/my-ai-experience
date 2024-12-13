@@ -21,13 +21,13 @@ export const MoveNetSinglePoseLightening = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const predict = useCallback(
-    async (model: any, camData: HTMLVideoElement) => {
+    async (model: tf.GraphModel, camData: HTMLVideoElement) => {
       const result = tf.tidy(() => {
         const tensor = tf.browser
           .fromPixels(camData)
           .resizeNearestNeighbor([IMAGE_SIZE[0], IMAGE_SIZE[1]])
           .expandDims();
-        return model.predict(tensor);
+        return model.predict(tensor) as tf.Tensor;
       });
 
       const data = await result.data();
@@ -58,15 +58,6 @@ export const MoveNetSinglePoseLightening = () => {
         }
       }
 
-      for (let i = 0; i < KEYPOINT_SIZE; i++) {
-        if (keypoints[i]) {
-          ctx.beginPath();
-          ctx.arc(keypoints[i][0], keypoints[i][1], DOT_RADIUS, 0, 2 * Math.PI);
-          ctx.fillStyle = DOT_COLOR;
-          ctx.fill();
-        }
-      }
-
       for (const [i, j] of COCO_ADJACENT_KEYPAIRS) {
         if (keypoints[i] && keypoints[j]) {
           ctx.beginPath();
@@ -75,6 +66,15 @@ export const MoveNetSinglePoseLightening = () => {
           ctx.strokeStyle = LINE_COLOR;
           ctx.lineWidth = LINE_WIDTH;
           ctx.stroke();
+        }
+      }
+
+      for (let i = 0; i < KEYPOINT_SIZE; i++) {
+        if (keypoints[i]) {
+          ctx.beginPath();
+          ctx.arc(keypoints[i][0], keypoints[i][1], DOT_RADIUS, 0, 2 * Math.PI);
+          ctx.fillStyle = DOT_COLOR;
+          ctx.fill();
         }
       }
     },
