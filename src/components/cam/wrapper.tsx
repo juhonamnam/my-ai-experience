@@ -67,20 +67,24 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
 
     const handle = async () => {
       if (unmounted) return;
-      if (camDataHandlerRef?.current) {
+      const handler = camDataHandlerRef.current;
+      if (handler) {
         try {
-          await camDataHandlerRef.current(videoRef.current);
+          await handler(videoRef.current);
           if (predictCountRef.current === null) predictCountRef.current = 1;
           else predictCountRef.current++;
           setErrorMessage(null);
         } catch (e) {
-          predictCountRef.current = null;
-          console.error(e);
-          if (e instanceof Error) setErrorMessage(e.message);
-          else setErrorMessage(String(e));
-          await wait(1000);
+          if (handler === camDataHandlerRef.current) {
+            predictCountRef.current = null;
+            console.error(e);
+            if (e instanceof Error) setErrorMessage(e.message);
+            else setErrorMessage(String(e));
+            await wait(1000);
+          }
         }
       } else {
+        setErrorMessage(null);
         predictCountRef.current = null;
       }
       frameId = requestAnimationFrame(handle);
