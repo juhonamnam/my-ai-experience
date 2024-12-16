@@ -39,7 +39,7 @@ const ANCHOR_CONFIGURATION = {
   fixedAnchorSize: true,
 };
 
-export const MediaPipeFaceLandmark = () => {
+export const MediaPipeFaceMesh = () => {
   const { setCamDataHandler, clear, flipRef } = useCamData();
   const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);

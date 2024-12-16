@@ -11,7 +11,7 @@ import { SSDLiteMobileNetV2 } from "./components/models/SSDLiteMobileNetV2";
 import { MoveNetSinglePoseLightening } from "./components/models/MoveNetSinglePoseLightening";
 import { MediaPipeHandPoseFull } from "./components/models/MediaPipeHandPoseFull";
 import { BodyPixMobileNetStride16 } from "./components/models/BodyPixMobileNetStride16";
-import { MediaPipeFaceLandmark } from "./components/models/MediaPipeFaceLandmark";
+import { MediaPipeFaceMesh } from "./components/models/MediaPipeFaceMesh";
 
 const MODELS = {
   None: <></>,
@@ -23,7 +23,7 @@ const MODELS = {
   MoveNet: <MoveNetSinglePoseLightening />,
   BodyPix: <BodyPixMobileNetStride16 />,
   "MediaPipe-HandPose": <MediaPipeHandPoseFull />,
-  "MediaPipe-Face-Landmark": <MediaPipeFaceLandmark />,
+  "MediaPipe-FaceMesh": <MediaPipeFaceMesh />,
 };
 
 function App() {
