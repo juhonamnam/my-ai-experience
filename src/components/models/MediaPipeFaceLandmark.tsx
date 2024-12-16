@@ -50,15 +50,49 @@ export const MediaPipeFaceLandmark = () => {
       ssdAnchors: SSDAnchor[],
       camData: HTMLVideoElement,
     ) => {
-      const tensor = tf.tidy(() => {
-        return tf.browser
+      const [tensor, scale] = tf.tidy(() => {
+        let inputTensor = tf.browser
           .fromPixels(camData)
-          .resizeNearestNeighbor([
-            DETECTION_IMAGE_SIZE[0],
-            DETECTION_IMAGE_SIZE[1],
-          ])
           .toFloat()
           .expandDims() as tf.Tensor4D;
+
+        const inputShape = [inputTensor.shape[1], inputTensor.shape[2]];
+        const yResizeRatio = DETECTION_IMAGE_SIZE[0] / inputShape[0];
+        const xResizeRatio = DETECTION_IMAGE_SIZE[1] / inputShape[1];
+
+        let scale;
+
+        if (yResizeRatio < xResizeRatio) {
+          inputTensor = inputTensor.resizeNearestNeighbor([
+            DETECTION_IMAGE_SIZE[0],
+            Math.round(inputShape[1] * yResizeRatio),
+          ]);
+          scale = {
+            y: 1,
+            x: DETECTION_IMAGE_SIZE[1] / inputTensor.shape[2],
+          };
+        } else {
+          inputTensor = inputTensor.resizeNearestNeighbor([
+            Math.round(inputShape[0] * xResizeRatio),
+            DETECTION_IMAGE_SIZE[1],
+          ]);
+          scale = {
+            y: DETECTION_IMAGE_SIZE[0] / inputTensor.shape[1],
+            x: 1,
+          };
+        }
+
+        return [
+          tf.image.transform(
+            inputTensor,
+            tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+            "nearest",
+            "constant",
+            0,
+            [DETECTION_IMAGE_SIZE[0], DETECTION_IMAGE_SIZE[1]],
+          ),
+          scale,
+        ];
       });
 
       const result = tf.tidy(() => {
@@ -98,15 +132,15 @@ export const MediaPipeFaceLandmark = () => {
         const score = scores[i];
         if (score > DETECTION_SCORE_THRESHOLD) {
           const xCenter =
-            (data[idx] * ssdAnchors[i].width) / DETECTION_IMAGE_SIZE[0] +
+            (data[idx] * ssdAnchors[i].width) / DETECTION_IMAGE_SIZE[1] +
             ssdAnchors[i].xCenter;
           const yCenter =
-            (data[idx + 1] * ssdAnchors[i].height) / DETECTION_IMAGE_SIZE[1] +
+            (data[idx + 1] * ssdAnchors[i].height) / DETECTION_IMAGE_SIZE[0] +
             ssdAnchors[i].yCenter;
           const width =
-            (data[idx + 2] * ssdAnchors[i].width) / DETECTION_IMAGE_SIZE[0];
+            (data[idx + 2] * ssdAnchors[i].width) / DETECTION_IMAGE_SIZE[1];
           const height =
-            (data[idx + 3] * ssdAnchors[i].height) / DETECTION_IMAGE_SIZE[1];
+            (data[idx + 3] * ssdAnchors[i].height) / DETECTION_IMAGE_SIZE[0];
 
           const xMin = xCenter - width / 2;
           const yMin = yCenter - height / 2;
@@ -149,7 +183,7 @@ export const MediaPipeFaceLandmark = () => {
         const width = filteredBoxes2[indexes[i]][2];
         const height = filteredBoxes2[indexes[i]][3];
 
-        const widthAndHeight = Math.max(width, height) * 1.5;
+        const widthAndHeight = Math.max(width, height) * 2;
 
         const yMin = yCenter - widthAndHeight / 2;
         const xMin = xCenter - widthAndHeight / 2;
@@ -181,12 +215,15 @@ export const MediaPipeFaceLandmark = () => {
         for (let j = 0; j < LANDMARK_KEYPOINTS; j++) {
           const idx = j * 3;
           const x =
-            (landmarkKeypoints[idx] * widthAndHeight) / LANDMARK_IMAGE_SIZE[0] +
-            xMin;
-          const y =
-            (landmarkKeypoints[idx + 1] * widthAndHeight) /
+            ((landmarkKeypoints[idx] * widthAndHeight) /
               LANDMARK_IMAGE_SIZE[1] +
-            yMin;
+              xMin) *
+            scale.x;
+          const y =
+            ((landmarkKeypoints[idx + 1] * widthAndHeight) /
+              LANDMARK_IMAGE_SIZE[0] +
+              yMin) *
+            scale.y;
 
           const clientX = (flipRef.current ? 1 - x : x) * camData.clientWidth;
           const clientY = y * camData.clientHeight;

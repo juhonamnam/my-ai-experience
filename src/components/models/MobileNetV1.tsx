@@ -21,12 +21,36 @@ export const MobileNetV1 = () => {
   >([]);
   const predict = async (model: tf.GraphModel, camData: HTMLVideoElement) => {
     const result = tf.tidy(() => {
-      const tensor = tf.browser
+      let tensor = tf.browser
         .fromPixels(camData)
-        .resizeNearestNeighbor([IMAGE_SIZE[0], IMAGE_SIZE[1]])
         .toFloat()
         .mul(1 / 255.0)
-        .expandDims();
+        .expandDims() as tf.Tensor4D;
+
+      const inputShape = [tensor.shape[1], tensor.shape[2]];
+      const yResizeRatio = IMAGE_SIZE[0] / inputShape[0];
+      const xResizeRatio = IMAGE_SIZE[1] / inputShape[1];
+
+      if (yResizeRatio < xResizeRatio) {
+        tensor = tensor.resizeNearestNeighbor([
+          IMAGE_SIZE[0],
+          Math.round(inputShape[1] * yResizeRatio),
+        ]);
+      } else {
+        tensor = tensor.resizeNearestNeighbor([
+          Math.round(inputShape[0] * xResizeRatio),
+          IMAGE_SIZE[1],
+        ]);
+      }
+
+      tensor = tf.image.transform(
+        tensor,
+        tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+        "nearest",
+        "constant",
+        0,
+        [IMAGE_SIZE[0], IMAGE_SIZE[1]],
+      );
 
       const logits1001 = model.predict(tensor) as tf.Tensor2D;
 

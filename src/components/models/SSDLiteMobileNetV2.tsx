@@ -22,12 +22,50 @@ export const SSDLiteMobileNetV2 = () => {
 
   const predict = useCallback(
     async (model: tf.GraphModel, camData: HTMLVideoElement) => {
-      const tensor = tf.tidy(() => {
-        const tensor = tf.browser
+      const [tensor, scale] = tf.tidy(() => {
+        let inputTensor = tf.browser
           .fromPixels(camData)
-          .resizeNearestNeighbor([IMAGE_SIZE[0], IMAGE_SIZE[1]])
-          .expandDims();
-        return tensor;
+          .toFloat()
+          .expandDims() as tf.Tensor4D;
+
+        const inputShape = [inputTensor.shape[1], inputTensor.shape[2]];
+        const yResizeRatio = IMAGE_SIZE[0] / inputShape[0];
+        const xResizeRatio = IMAGE_SIZE[1] / inputShape[1];
+
+        let scale;
+
+        if (yResizeRatio < xResizeRatio) {
+          inputTensor = inputTensor.resizeNearestNeighbor([
+            IMAGE_SIZE[0],
+            Math.round(inputShape[1] * yResizeRatio),
+          ]);
+          scale = {
+            y: 1,
+            x: IMAGE_SIZE[1] / inputTensor.shape[2],
+          };
+        } else {
+          inputTensor = inputTensor.resizeNearestNeighbor([
+            Math.round(inputShape[0] * xResizeRatio),
+            IMAGE_SIZE[1],
+          ]);
+          scale = {
+            y: IMAGE_SIZE[0] / inputTensor.shape[1],
+            x: 1,
+          };
+        }
+
+        inputTensor = tf.image
+          .transform(
+            inputTensor,
+            tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+            "nearest",
+            "constant",
+            0,
+            [IMAGE_SIZE[0], IMAGE_SIZE[1]],
+          )
+          .toInt();
+
+        return [inputTensor, scale];
       });
 
       const result = (await model.predictAsync(tensor)) as tf.Tensor[];
@@ -98,16 +136,20 @@ export const SSDLiteMobileNetV2 = () => {
       indexesTensor.dispose();
 
       for (let i = 0; i < indexes.length; i++) {
-        const yMin = filtered_boxes[indexes[i] * 4] * camData.clientHeight;
+        const yMin =
+          filtered_boxes[indexes[i] * 4] * scale.y * camData.clientHeight;
         const xMin =
           (flipRef.current
-            ? 1 - filtered_boxes[indexes[i] * 4 + 3]
-            : filtered_boxes[indexes[i] * 4 + 1]) * camData.clientWidth;
-        const yMax = filtered_boxes[indexes[i] * 4 + 2] * camData.clientHeight;
+            ? 1 - filtered_boxes[indexes[i] * 4 + 3] * scale.x
+            : filtered_boxes[indexes[i] * 4 + 1] * scale.x) *
+          camData.clientWidth;
+        const yMax =
+          filtered_boxes[indexes[i] * 4 + 2] * scale.y * camData.clientHeight;
         const xMax =
           (flipRef.current
-            ? 1 - filtered_boxes[indexes[i] * 4 + 1]
-            : filtered_boxes[indexes[i] * 4 + 3]) * camData.clientWidth;
+            ? 1 - filtered_boxes[indexes[i] * 4 + 1] * scale.x
+            : filtered_boxes[indexes[i] * 4 + 3] * scale.x) *
+          camData.clientWidth;
 
         const classIndex = filtered_classes[indexes[i]] + 1;
 

@@ -22,12 +22,50 @@ export const MoveNetSinglePoseLightening = () => {
 
   const predict = useCallback(
     async (model: tf.GraphModel, camData: HTMLVideoElement) => {
-      const result = tf.tidy(() => {
-        const tensor = tf.browser
+      const [result, scale] = tf.tidy(() => {
+        let tensor = tf.browser
           .fromPixels(camData)
-          .resizeNearestNeighbor([IMAGE_SIZE[0], IMAGE_SIZE[1]])
-          .expandDims();
-        return model.predict(tensor) as tf.Tensor;
+          .toFloat()
+          .expandDims() as tf.Tensor4D;
+
+        const inputShape = [tensor.shape[1], tensor.shape[2]];
+        const yResizeRatio = IMAGE_SIZE[0] / inputShape[0];
+        const xResizeRatio = IMAGE_SIZE[1] / inputShape[1];
+
+        let scale;
+
+        if (yResizeRatio < xResizeRatio) {
+          tensor = tensor.resizeNearestNeighbor([
+            IMAGE_SIZE[0],
+            Math.round(inputShape[1] * yResizeRatio),
+          ]);
+          scale = {
+            y: 1,
+            x: IMAGE_SIZE[1] / tensor.shape[2],
+          };
+        } else {
+          tensor = tensor.resizeNearestNeighbor([
+            Math.round(inputShape[0] * xResizeRatio),
+            IMAGE_SIZE[1],
+          ]);
+          scale = {
+            y: IMAGE_SIZE[0] / tensor.shape[1],
+            x: 1,
+          };
+        }
+
+        tensor = tf.image.transform(
+          tensor,
+          tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+          "nearest",
+          "constant",
+          0,
+          [IMAGE_SIZE[0], IMAGE_SIZE[1]],
+        );
+
+        tensor = tensor.toInt();
+
+        return [model.predict(tensor) as tf.Tensor, scale];
       });
 
       const data = await result.data();
@@ -50,11 +88,14 @@ export const MoveNetSinglePoseLightening = () => {
         const idx = i * 3;
         const score = data[idx + 2];
         if (score > SCORE_THRESHOLD) {
-          const y = data[idx] * camData.clientHeight;
-          const x = flipRef.current
-            ? (1 - data[idx + 1]) * camData.clientWidth
-            : data[idx + 1] * camData.clientWidth;
-          keypoints[i] = [x, y];
+          const y = data[idx] * scale.y;
+          const x = data[idx + 1] * scale.x;
+
+          const clientY = y * camData.clientHeight;
+          const clientX = flipRef.current
+            ? (1 - x) * camData.clientWidth
+            : x * camData.clientWidth;
+          keypoints[i] = [clientX, clientY];
         }
       }
 
