@@ -5,26 +5,21 @@ import { useLoading } from "../Loading";
 import * as tf from "@tensorflow/tfjs";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import { getSSDAnchors, SSDAnchor } from "../ssdAnchors";
-import { MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS } from "../mediapipeConnectedKeypointsPairs";
+import { MEDIAPIPE_FACE_MESH_CONNECTED_KEYPOINTS_PAIRS } from "../mediapipeFaceMeshConnectedKeypointsPairs";
 
-const DETECTION_MODEL_URL =
-  "/models/mediapipe-handpose-detection-full/model.json";
-const LANDMARK_MODEL_URL =
-  "/models/mediapipe-handpose-landmark-full/model.json";
-const DETECTION_IMAGE_SIZE = [192, 192] as const;
+const DETECTION_MODEL_URL = "/models/mediapipe-face-detection-short/model.json";
+const DETECTION_IMAGE_SIZE = [128, 128] as const;
+const DETECTION_BOXES = 896;
+const DETECTION_FEATURES = 16;
 const DETECTION_SCORE_THRESHOLD = 0.5;
-const DETECTION_BOXES = 2016;
-const DETECTION_FEATURES = 18;
-const DETECTION_KEYPOINTS_IN_USE = [0, 2];
-const HANDS_NUM = 2;
+const FACES_NUM = 1;
 
-const LANDMARK_IMAGE_SIZE = [224, 224] as const;
-const LANDMARK_SCORE_THRESHOLD = 0.3;
-const LANDMARK_KEYPOINT_SIZE = 21;
-const RIGHT_HAND_COLOR = "red";
-const LEFT_HAND_COLOR = "blue";
-const LINE_WIDTH = 3;
-const LINE_COLOR = "white";
+const LANDMARK_MODEL_URL =
+  "/models/mediapipe-face-landmark-detection/model.json";
+const LANDMARK_IMAGE_SIZE = [192, 192];
+const LANDMARK_KEYPOINTS = 468;
+const LINE_WIDTH = 1;
+const LINE_COLOR = "pink";
 
 const ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestLayer: false,
@@ -34,8 +29,8 @@ const ANCHOR_CONFIGURATION = {
   numLayers: 4,
   minScale: 0.1484375,
   maxScale: 0.75,
-  inputSizeHeight: 192,
-  inputSizeWidth: 192,
+  inputSizeHeight: 128,
+  inputSizeWidth: 128,
   anchorOffsetX: 0.5,
   anchorOffsetY: 0.5,
   strides: [8, 16, 16, 16],
@@ -43,7 +38,7 @@ const ANCHOR_CONFIGURATION = {
   fixedAnchorSize: true,
 };
 
-export const MediaPipeHandPoseFull = () => {
+export const MediaPipeFaceLandmark = () => {
   const { setCamDataHandler, clear, flipRef } = useCamData();
   const { setLoading } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -63,12 +58,13 @@ export const MediaPipeHandPoseFull = () => {
             DETECTION_IMAGE_SIZE[1],
           ])
           .toFloat()
-          .div(255)
           .expandDims() as tf.Tensor4D;
       });
 
       const result = tf.tidy(() => {
-        const result = detectionModel.predict(tensor) as tf.Tensor3D;
+        const result = detectionModel.execute(
+          tensor.div(127.5).sub(1),
+        ) as tf.Tensor3D;
 
         const scores = result.slice([0, 0, 0], [-1, -1, 1]).sigmoid();
         const features = result.slice([0, 0, 1], [-1, -1, -1]);
@@ -96,7 +92,6 @@ export const MediaPipeHandPoseFull = () => {
       const filteredBoxes1 = [];
       const filteredBoxes2 = [];
       const filteredScores = [];
-      const filteredKeypoints = [];
 
       for (let i = 0; i < DETECTION_BOXES; i++) {
         const idx = i * DETECTION_FEATURES;
@@ -121,22 +116,6 @@ export const MediaPipeHandPoseFull = () => {
           filteredBoxes1.push([xMin, yMin, xMax, yMax]);
           filteredBoxes2.push([xCenter, yCenter, width, height]);
           filteredScores.push(score);
-          const k = [];
-
-          for (const j of DETECTION_KEYPOINTS_IN_USE) {
-            const kOffset = 4 + j * 2;
-            const x =
-              (data[idx + kOffset] * ssdAnchors[i].width) /
-                DETECTION_IMAGE_SIZE[0] +
-              ssdAnchors[i].xCenter;
-            const y =
-              (data[idx + kOffset + 1] * ssdAnchors[i].height) /
-                DETECTION_IMAGE_SIZE[1] +
-              ssdAnchors[i].yCenter;
-            k.push({ x, y });
-          }
-
-          filteredKeypoints.push(k);
         }
       }
 
@@ -151,7 +130,7 @@ export const MediaPipeHandPoseFull = () => {
       const indexesTensor = await tf.image.nonMaxSuppressionAsync(
         boxesTensor,
         filteredScores,
-        HANDS_NUM,
+        FACES_NUM,
         DETECTION_SCORE_THRESHOLD,
         DETECTION_SCORE_THRESHOLD,
       );
@@ -162,74 +141,60 @@ export const MediaPipeHandPoseFull = () => {
 
       indexesTensor.dispose();
 
-      const handsKeypoints = [];
+      const facesKeypoints = [];
 
       for (let i = 0; i < indexes.length; i++) {
-        const detectionKeypoints = filteredKeypoints[indexes[i]];
-
         const xCenter = filteredBoxes2[indexes[i]][0];
         const yCenter = filteredBoxes2[indexes[i]][1];
         const width = filteredBoxes2[indexes[i]][2];
         const height = filteredBoxes2[indexes[i]][3];
 
-        const dx = 0.5 * (detectionKeypoints[1].x - detectionKeypoints[0].x);
-        const dy = 0.5 * (detectionKeypoints[1].y - detectionKeypoints[0].y);
+        const widthAndHeight = Math.max(width, height) * 1.5;
 
-        const newXCenter = xCenter + dx;
-        const newYCenter = yCenter + dy;
-        const widthAndHeight = Math.max(width, height) * 2.6;
-
-        const yMin = newYCenter - widthAndHeight / 2;
-        const xMin = newXCenter - widthAndHeight / 2;
-        const yMax = newYCenter + widthAndHeight / 2;
-        const xMax = newXCenter + widthAndHeight / 2;
+        const yMin = yCenter - widthAndHeight / 2;
+        const xMin = xCenter - widthAndHeight / 2;
+        const yMax = yCenter + widthAndHeight / 2;
+        const xMax = xCenter + widthAndHeight / 2;
 
         const landmarks = tf.tidy(() => {
-          const regionTensor = tf.image.cropAndResize(
-            tensor,
-            [[yMin, xMin, yMax, xMax]],
-            [0],
-            [LANDMARK_IMAGE_SIZE[0], LANDMARK_IMAGE_SIZE[1]],
-          );
+          const regionTensor = tf.image
+            .cropAndResize(
+              tensor,
+              [[yMin, xMin, yMax, xMax]],
+              [0],
+              [LANDMARK_IMAGE_SIZE[0], LANDMARK_IMAGE_SIZE[1]],
+            )
+            .div(127.5)
+            .sub(1) as tf.Tensor4D;
 
           return landmarkModel.execute(regionTensor, [
-            "Identity_2:0",
-            "Identity_1:0",
-            "Identity:0",
-          ]) as tf.Tensor[];
+            "output_mesh",
+          ]) as tf.Tensor3D;
         });
 
-        const handedness = await landmarks[2].data();
-        const score = await landmarks[1].data();
-        const landmarkKeypoints = await landmarks[0].data();
+        const landmarkKeypoints = await landmarks.data();
 
-        tf.dispose(landmarks);
+        landmarks.dispose();
 
-        if (score[0] > LANDMARK_SCORE_THRESHOLD) {
-          const color =
-            handedness[0] > 0.5 ? RIGHT_HAND_COLOR : LEFT_HAND_COLOR;
+        const faceKeypoints = [];
 
-          const handKeypoints = [];
+        for (let j = 0; j < LANDMARK_KEYPOINTS; j++) {
+          const idx = j * 3;
+          const x =
+            (landmarkKeypoints[idx] * widthAndHeight) / LANDMARK_IMAGE_SIZE[0] +
+            xMin;
+          const y =
+            (landmarkKeypoints[idx + 1] * widthAndHeight) /
+              LANDMARK_IMAGE_SIZE[1] +
+            yMin;
 
-          for (let j = 0; j < LANDMARK_KEYPOINT_SIZE; j++) {
-            const idx = j * 3;
-            const x =
-              (landmarkKeypoints[idx] * widthAndHeight) /
-                LANDMARK_IMAGE_SIZE[0] +
-              xMin;
-            const y =
-              (landmarkKeypoints[idx + 1] * widthAndHeight) /
-                LANDMARK_IMAGE_SIZE[1] +
-              yMin;
+          const clientX = (flipRef.current ? 1 - x : x) * camData.clientWidth;
+          const clientY = y * camData.clientHeight;
 
-            const clientX = (flipRef.current ? 1 - x : x) * camData.clientWidth;
-            const clientY = y * camData.clientHeight;
-
-            handKeypoints.push({ clientX, clientY, color });
-          }
-
-          handsKeypoints.push(handKeypoints);
+          faceKeypoints.push({ clientX, clientY, xMin, yMin, widthAndHeight });
         }
+
+        facesKeypoints.push(faceKeypoints);
       }
 
       tensor.dispose();
@@ -237,10 +202,13 @@ export const MediaPipeHandPoseFull = () => {
       canvasRef.current.width = camData.clientWidth;
       canvasRef.current.height = camData.clientHeight;
 
-      for (const handKeypoints of handsKeypoints) {
-        for (const [start, end] of MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS) {
-          const { clientX: startX, clientY: startY } = handKeypoints[start];
-          const { clientX: endX, clientY: endY } = handKeypoints[end];
+      for (const faceKeypoints of facesKeypoints) {
+        for (const [
+          start,
+          end,
+        ] of MEDIAPIPE_FACE_MESH_CONNECTED_KEYPOINTS_PAIRS) {
+          const { clientX: startX, clientY: startY } = faceKeypoints[start];
+          const { clientX: endX, clientY: endY } = faceKeypoints[end];
 
           ctx.beginPath();
           ctx.moveTo(startX, startY);
@@ -248,13 +216,6 @@ export const MediaPipeHandPoseFull = () => {
           ctx.lineWidth = LINE_WIDTH;
           ctx.strokeStyle = LINE_COLOR;
           ctx.stroke();
-        }
-
-        for (const { clientX, clientY, color } of handKeypoints) {
-          ctx.beginPath();
-          ctx.arc(clientX, clientY, 5, 0, 2 * Math.PI);
-          ctx.fillStyle = color;
-          ctx.fill();
         }
       }
     },

@@ -11,7 +11,7 @@ import { SSDLiteMobileNetV2 } from "./components/models/SSDLiteMobileNetV2";
 import { MoveNetSinglePoseLightening } from "./components/models/MoveNetSinglePoseLightening";
 import { MediaPipeHandPoseFull } from "./components/models/MediaPipeHandPoseFull";
 import { BodyPixMobileNetStride16 } from "./components/models/BodyPixMobileNetStride16";
-// import { FaceLandmarksDetection } from "./components/models/FaceLandmarksDetection";
+import { MediaPipeFaceLandmark } from "./components/models/MediaPipeFaceLandmark";
 
 const MODELS = {
   None: <></>,
@@ -21,9 +21,9 @@ const MODELS = {
   "MobileNetV3-Small": <MobileNetV3Small />,
   SSDLite: <SSDLiteMobileNetV2 />,
   MoveNet: <MoveNetSinglePoseLightening />,
-  "MediaPipe-HandPose": <MediaPipeHandPoseFull />,
   BodyPix: <BodyPixMobileNetStride16 />,
-  // [ModelType.FaceLandmarksDetection]: <FaceLandmarksDetection />,
+  "MediaPipe-HandPose": <MediaPipeHandPoseFull />,
+  "MediaPipe-Face-Landmark": <MediaPipeFaceLandmark />,
 };
 
 function App() {
