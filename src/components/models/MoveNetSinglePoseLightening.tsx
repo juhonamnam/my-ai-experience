@@ -22,7 +22,7 @@ export const MoveNetSinglePoseLightening = () => {
 
   const predict = useCallback(
     async (model: tf.GraphModel, camData: HTMLVideoElement) => {
-      const [result, scale] = tf.tidy(() => {
+      const [result, scale, padding] = tf.tidy(() => {
         let tensor = tf.browser
           .fromPixels(camData)
           .toFloat()
@@ -33,6 +33,7 @@ export const MoveNetSinglePoseLightening = () => {
         const xResizeRatio = IMAGE_SIZE[1] / inputShape[1];
 
         let scale;
+        let padding;
 
         if (yResizeRatio < xResizeRatio) {
           tensor = tensor.resizeNearestNeighbor([
@@ -43,6 +44,10 @@ export const MoveNetSinglePoseLightening = () => {
             y: 1,
             x: IMAGE_SIZE[1] / tensor.shape[2],
           };
+          padding = {
+            y: 0,
+            x: (scale.x - 1) / 2,
+          };
         } else {
           tensor = tensor.resizeNearestNeighbor([
             Math.round(inputShape[0] * xResizeRatio),
@@ -52,11 +57,27 @@ export const MoveNetSinglePoseLightening = () => {
             y: IMAGE_SIZE[0] / tensor.shape[1],
             x: 1,
           };
+          padding = {
+            y: (scale.y - 1) / 2,
+            x: 0,
+          };
         }
 
         tensor = tf.image.transform(
           tensor,
-          tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+          tf.tensor2d(
+            [
+              1,
+              0,
+              -Math.round(padding.x * IMAGE_SIZE[1]),
+              0,
+              1,
+              -Math.round(padding.y * IMAGE_SIZE[0]),
+              0,
+              0,
+            ],
+            [1, 8],
+          ),
           "nearest",
           "constant",
           0,
@@ -65,7 +86,7 @@ export const MoveNetSinglePoseLightening = () => {
 
         tensor = tensor.toInt();
 
-        return [model.predict(tensor) as tf.Tensor, scale];
+        return [model.predict(tensor) as tf.Tensor, scale, padding];
       });
 
       const data = await result.data();
@@ -88,8 +109,8 @@ export const MoveNetSinglePoseLightening = () => {
         const idx = i * 3;
         const score = data[idx + 2];
         if (score > SCORE_THRESHOLD) {
-          const y = data[idx] * scale.y;
-          const x = data[idx + 1] * scale.x;
+          const y = (data[idx] - padding.y) * scale.y;
+          const x = (data[idx + 1] - padding.x) * scale.x;
 
           const clientY = y * camData.clientHeight;
           const clientX = flipRef.current

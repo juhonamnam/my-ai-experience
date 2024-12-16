@@ -22,7 +22,7 @@ export const SSDLiteMobileNetV2 = () => {
 
   const predict = useCallback(
     async (model: tf.GraphModel, camData: HTMLVideoElement) => {
-      const [tensor, scale] = tf.tidy(() => {
+      const [tensor, scale, padding] = tf.tidy(() => {
         let inputTensor = tf.browser
           .fromPixels(camData)
           .toFloat()
@@ -33,6 +33,7 @@ export const SSDLiteMobileNetV2 = () => {
         const xResizeRatio = IMAGE_SIZE[1] / inputShape[1];
 
         let scale;
+        let padding;
 
         if (yResizeRatio < xResizeRatio) {
           inputTensor = inputTensor.resizeNearestNeighbor([
@@ -43,6 +44,10 @@ export const SSDLiteMobileNetV2 = () => {
             y: 1,
             x: IMAGE_SIZE[1] / inputTensor.shape[2],
           };
+          padding = {
+            y: 0,
+            x: (scale.x - 1) / 2,
+          };
         } else {
           inputTensor = inputTensor.resizeNearestNeighbor([
             Math.round(inputShape[0] * xResizeRatio),
@@ -52,12 +57,28 @@ export const SSDLiteMobileNetV2 = () => {
             y: IMAGE_SIZE[0] / inputTensor.shape[1],
             x: 1,
           };
+          padding = {
+            y: (scale.y - 1) / 2,
+            x: 0,
+          };
         }
 
         inputTensor = tf.image
           .transform(
             inputTensor,
-            tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+            tf.tensor2d(
+              [
+                1,
+                0,
+                -Math.round(padding.x * IMAGE_SIZE[1]),
+                0,
+                1,
+                -Math.round(padding.y * IMAGE_SIZE[0]),
+                0,
+                0,
+              ],
+              [1, 8],
+            ),
             "nearest",
             "constant",
             0,
@@ -65,7 +86,7 @@ export const SSDLiteMobileNetV2 = () => {
           )
           .toInt();
 
-        return [inputTensor, scale];
+        return [inputTensor, scale, padding];
       });
 
       const result = (await model.predictAsync(tensor)) as tf.Tensor[];
@@ -137,11 +158,13 @@ export const SSDLiteMobileNetV2 = () => {
 
       for (let i = 0; i < indexes.length; i++) {
         const yMin =
-          filtered_boxes[indexes[i] * 4] * scale.y * camData.clientHeight;
+          (filtered_boxes[indexes[i] * 4] - padding.y) *
+          scale.y *
+          camData.clientHeight;
         const xMin =
           (flipRef.current
-            ? 1 - filtered_boxes[indexes[i] * 4 + 3] * scale.x
-            : filtered_boxes[indexes[i] * 4 + 1] * scale.x) *
+            ? 1 - (filtered_boxes[indexes[i] * 4 + 3] - padding.x) * scale.x
+            : (filtered_boxes[indexes[i] * 4 + 1] - padding.x) * scale.x) *
           camData.clientWidth;
         const yMax =
           filtered_boxes[indexes[i] * 4 + 2] * scale.y * camData.clientHeight;

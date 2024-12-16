@@ -31,21 +31,43 @@ export const MobileNetV3Small = () => {
       const yResizeRatio = IMAGE_SIZE[0] / inputShape[0];
       const xResizeRatio = IMAGE_SIZE[1] / inputShape[1];
 
+      let padding;
+
       if (yResizeRatio < xResizeRatio) {
         tensor = tensor.resizeNearestNeighbor([
           IMAGE_SIZE[0],
           Math.round(inputShape[1] * yResizeRatio),
         ]);
+        padding = {
+          y: 0,
+          x: (IMAGE_SIZE[1] / tensor.shape[2] - 1) / 2,
+        };
       } else {
         tensor = tensor.resizeNearestNeighbor([
           Math.round(inputShape[0] * xResizeRatio),
           IMAGE_SIZE[1],
         ]);
+        padding = {
+          y: (IMAGE_SIZE[0] / tensor.shape[1] - 1) / 2,
+          x: 0,
+        };
       }
 
       tensor = tf.image.transform(
         tensor,
-        tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+        tf.tensor2d(
+          [
+            1,
+            0,
+            -Math.round(padding.x * IMAGE_SIZE[1]),
+            0,
+            1,
+            -Math.round(padding.y * IMAGE_SIZE[0]),
+            0,
+            0,
+          ],
+          [1, 8],
+        ),
         "nearest",
         "constant",
         0,

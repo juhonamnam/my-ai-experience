@@ -50,7 +50,7 @@ export const MediaPipeFaceLandmark = () => {
       ssdAnchors: SSDAnchor[],
       camData: HTMLVideoElement,
     ) => {
-      const [tensor, scale] = tf.tidy(() => {
+      const [tensor, scale, padding] = tf.tidy(() => {
         let inputTensor = tf.browser
           .fromPixels(camData)
           .toFloat()
@@ -61,6 +61,7 @@ export const MediaPipeFaceLandmark = () => {
         const xResizeRatio = DETECTION_IMAGE_SIZE[1] / inputShape[1];
 
         let scale;
+        let padding;
 
         if (yResizeRatio < xResizeRatio) {
           inputTensor = inputTensor.resizeNearestNeighbor([
@@ -71,6 +72,10 @@ export const MediaPipeFaceLandmark = () => {
             y: 1,
             x: DETECTION_IMAGE_SIZE[1] / inputTensor.shape[2],
           };
+          padding = {
+            y: 0,
+            x: (scale.x - 1) / 2,
+          };
         } else {
           inputTensor = inputTensor.resizeNearestNeighbor([
             Math.round(inputShape[0] * xResizeRatio),
@@ -80,18 +85,35 @@ export const MediaPipeFaceLandmark = () => {
             y: DETECTION_IMAGE_SIZE[0] / inputTensor.shape[1],
             x: 1,
           };
+          padding = {
+            y: (scale.y - 1) / 2,
+            x: 0,
+          };
         }
 
         return [
           tf.image.transform(
             inputTensor,
-            tf.tensor2d([1, 0, 0, 0, 1, 0, 0, 0], [1, 8]),
+            tf.tensor2d(
+              [
+                1,
+                0,
+                -Math.round(padding.x * DETECTION_IMAGE_SIZE[1]),
+                0,
+                1,
+                -Math.round(padding.y * DETECTION_IMAGE_SIZE[0]),
+                0,
+                0,
+              ],
+              [1, 8],
+            ),
             "nearest",
             "constant",
             0,
             [DETECTION_IMAGE_SIZE[0], DETECTION_IMAGE_SIZE[1]],
           ),
           scale,
+          padding,
         ];
       });
 
@@ -217,12 +239,14 @@ export const MediaPipeFaceLandmark = () => {
           const x =
             ((landmarkKeypoints[idx] * widthAndHeight) /
               LANDMARK_IMAGE_SIZE[1] +
-              xMin) *
+              xMin -
+              padding.x) *
             scale.x;
           const y =
             ((landmarkKeypoints[idx + 1] * widthAndHeight) /
               LANDMARK_IMAGE_SIZE[0] +
-              yMin) *
+              yMin -
+              padding.y) *
             scale.y;
 
           const clientX = (flipRef.current ? 1 - x : x) * camData.clientWidth;
