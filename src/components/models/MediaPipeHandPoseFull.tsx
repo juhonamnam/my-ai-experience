@@ -223,6 +223,13 @@ export const MediaPipeHandPoseFull = () => {
       for (let i = 0; i < indexes.length; i++) {
         const detectionKeypoints = filteredKeypoints[indexes[i]];
 
+        const rotation =
+          Math.PI / 2 -
+          Math.atan2(
+            detectionKeypoints[0].y - detectionKeypoints[1].y,
+            detectionKeypoints[1].x - detectionKeypoints[0].x,
+          );
+
         const xCenter = filteredBoxes2[indexes[i]][0];
         const yCenter = filteredBoxes2[indexes[i]][1];
         const width = filteredBoxes2[indexes[i]][2];
@@ -241,12 +248,14 @@ export const MediaPipeHandPoseFull = () => {
         const xMax = newXCenter + widthAndHeight / 2;
 
         const landmarks = tf.tidy(() => {
-          const regionTensor = tf.image.cropAndResize(
+          let regionTensor = tf.image.cropAndResize(
             tensor,
             [[yMin, xMin, yMax, xMax]],
             [0],
             [LANDMARK_IMAGE_SIZE[0], LANDMARK_IMAGE_SIZE[1]],
           );
+
+          regionTensor = tf.image.rotateWithOffset(regionTensor, rotation);
 
           return landmarkModel.execute(regionTensor, [
             "Identity_2:0",
@@ -270,20 +279,30 @@ export const MediaPipeHandPoseFull = () => {
           for (let j = 0; j < LANDMARK_KEYPOINT_SIZE; j++) {
             const idx = j * 3;
             const x =
-              ((landmarkKeypoints[idx] * widthAndHeight) /
-                LANDMARK_IMAGE_SIZE[0] +
-                xMin -
-                padding.x) *
-              scale.x;
-            const y =
-              ((landmarkKeypoints[idx + 1] * widthAndHeight) /
+              (landmarkKeypoints[idx] * widthAndHeight) /
                 LANDMARK_IMAGE_SIZE[1] +
-                yMin -
-                padding.y) *
-              scale.y;
+              xMin;
+            const y =
+              (landmarkKeypoints[idx + 1] * widthAndHeight) /
+                LANDMARK_IMAGE_SIZE[0] +
+              yMin;
 
-            const clientX = (flipRef.current ? 1 - x : x) * camData.clientWidth;
-            const clientY = y * camData.clientHeight;
+            const rotatedX =
+              newXCenter +
+              (x - newXCenter) * Math.cos(rotation) -
+              (y - newYCenter) * Math.sin(rotation);
+            const rotatedY =
+              newYCenter +
+              (y - newYCenter) * Math.cos(rotation) +
+              (x - newXCenter) * Math.sin(rotation);
+
+            const restoredX = (rotatedX - padding.x) * scale.x;
+            const restoredY = (rotatedY - padding.y) * scale.y;
+
+            const clientX =
+              (flipRef.current ? 1 - restoredX : restoredX) *
+              camData.clientWidth;
+            const clientY = restoredY * camData.clientHeight;
 
             handKeypoints.push({ clientX, clientY, color });
           }

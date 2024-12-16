@@ -12,6 +12,7 @@ const DETECTION_IMAGE_SIZE = [128, 128] as const;
 const DETECTION_BOXES = 896;
 const DETECTION_FEATURES = 16;
 const DETECTION_SCORE_THRESHOLD = 0.5;
+const DETECTION_KEYPOINTS_IN_USE = [0, 1];
 const FACES_NUM = 1;
 
 const LANDMARK_MODEL_URL =
@@ -148,6 +149,7 @@ export const MediaPipeFaceLandmark = () => {
       const filteredBoxes1 = [];
       const filteredBoxes2 = [];
       const filteredScores = [];
+      const filteredKeypoints = [];
 
       for (let i = 0; i < DETECTION_BOXES; i++) {
         const idx = i * DETECTION_FEATURES;
@@ -172,6 +174,22 @@ export const MediaPipeFaceLandmark = () => {
           filteredBoxes1.push([xMin, yMin, xMax, yMax]);
           filteredBoxes2.push([xCenter, yCenter, width, height]);
           filteredScores.push(score);
+          const k = [];
+
+          for (const j of DETECTION_KEYPOINTS_IN_USE) {
+            const kOffset = 4 + j * 2;
+            const x =
+              (data[idx + kOffset] * ssdAnchors[i].width) /
+                DETECTION_IMAGE_SIZE[1] +
+              ssdAnchors[i].xCenter;
+            const y =
+              (data[idx + kOffset + 1] * ssdAnchors[i].height) /
+                DETECTION_IMAGE_SIZE[0] +
+              ssdAnchors[i].yCenter;
+            k.push({ x, y });
+          }
+
+          filteredKeypoints.push(k);
         }
       }
 
@@ -200,6 +218,13 @@ export const MediaPipeFaceLandmark = () => {
       const facesKeypoints = [];
 
       for (let i = 0; i < indexes.length; i++) {
+        const detectionKeypoints = filteredKeypoints[indexes[i]];
+
+        const rotation = -Math.atan2(
+          detectionKeypoints[0].y - detectionKeypoints[1].y,
+          detectionKeypoints[1].x - detectionKeypoints[0].x,
+        );
+
         const xCenter = filteredBoxes2[indexes[i]][0];
         const yCenter = filteredBoxes2[indexes[i]][1];
         const width = filteredBoxes2[indexes[i]][2];
@@ -213,7 +238,7 @@ export const MediaPipeFaceLandmark = () => {
         const xMax = xCenter + widthAndHeight / 2;
 
         const landmarks = tf.tidy(() => {
-          const regionTensor = tf.image
+          let regionTensor = tf.image
             .cropAndResize(
               tensor,
               [[yMin, xMin, yMax, xMax]],
@@ -222,6 +247,8 @@ export const MediaPipeFaceLandmark = () => {
             )
             .div(127.5)
             .sub(1) as tf.Tensor4D;
+
+          regionTensor = tf.image.rotateWithOffset(regionTensor, rotation);
 
           return landmarkModel.execute(regionTensor, [
             "output_mesh",
@@ -237,20 +264,28 @@ export const MediaPipeFaceLandmark = () => {
         for (let j = 0; j < LANDMARK_KEYPOINTS; j++) {
           const idx = j * 3;
           const x =
-            ((landmarkKeypoints[idx] * widthAndHeight) /
-              LANDMARK_IMAGE_SIZE[1] +
-              xMin -
-              padding.x) *
-            scale.x;
+            (landmarkKeypoints[idx] * widthAndHeight) / LANDMARK_IMAGE_SIZE[1] +
+            xMin;
           const y =
-            ((landmarkKeypoints[idx + 1] * widthAndHeight) /
+            (landmarkKeypoints[idx + 1] * widthAndHeight) /
               LANDMARK_IMAGE_SIZE[0] +
-              yMin -
-              padding.y) *
-            scale.y;
+            yMin;
 
-          const clientX = (flipRef.current ? 1 - x : x) * camData.clientWidth;
-          const clientY = y * camData.clientHeight;
+          const rotatedX =
+            xCenter +
+            (x - xCenter) * Math.cos(rotation) -
+            (y - yCenter) * Math.sin(rotation);
+          const rotatedY =
+            yCenter +
+            (y - yCenter) * Math.cos(rotation) +
+            (x - xCenter) * Math.sin(rotation);
+
+          const restoredX = (rotatedX - padding.x) * scale.x;
+          const restoredY = (rotatedY - padding.y) * scale.y;
+
+          const clientX =
+            (flipRef.current ? 1 - restoredX : restoredX) * camData.clientWidth;
+          const clientY = restoredY * camData.clientHeight;
 
           faceKeypoints.push({ clientX, clientY, xMin, yMin, widthAndHeight });
         }
