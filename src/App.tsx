@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Cam from "./components/cam";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
 import { MobileNetV1 } from "./components/models/MobileNetV1";
@@ -34,7 +35,7 @@ function App() {
     <div className="d-flex justify-content-center container">
       <Cam.CamWrapper>
         <div>
-          <label>Select Model</label>
+          <div className="pt-1 pb-1">Select Model</div>
           <select
             className="form-select"
             onChange={(e) => {

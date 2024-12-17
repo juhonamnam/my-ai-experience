@@ -18,9 +18,6 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
   const videoRef = useRef<HTMLVideoElement>(
     null,
   ) as MutableRefObject<HTMLVideoElement>;
-  const [devices, setDevices] = useState<{ label: string; value: string }[]>(
-    [],
-  );
   const flipRef = useRef(camLocalStorage.getFlip());
   const setCamDataHandler: SetCamDataHandler = (p) => {
     camDataHandlerRef.current = p;
@@ -33,34 +30,6 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const d: { label: string; value: string }[] = [];
-      devices.forEach((device) => {
-        if (device.kind === "videoinput") {
-          d.push({ value: device.deviceId, label: device.label });
-        }
-      });
-      let selectedDevice = camLocalStorage.getSelectedDeviceId();
-      if (!d.find((device) => device.value === selectedDevice)) {
-        selectedDevice = d[0]?.value;
-        camLocalStorage.setSelectedDeviceId(selectedDevice);
-      }
-      navigator.mediaDevices
-        .getUserMedia({
-          video: {
-            deviceId: d[0].value,
-          },
-        })
-        .then((stream) => {
-          videoRef.current.srcObject = stream;
-        });
-      setDevices(d);
-    });
-
-    if (flipRef.current) {
-      videoRef.current.style.transform = "scaleX(-1)";
-    }
-
     let unmounted = false;
 
     let frameId = 0;
@@ -68,7 +37,8 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
     const handle = async () => {
       if (unmounted) return;
       const handler = camDataHandlerRef.current;
-      if (handler) {
+      const readyState = videoRef.current.readyState;
+      if (handler && readyState === 4) {
         try {
           await handler(videoRef.current);
           if (predictCountRef.current === null) predictCountRef.current = 1;
@@ -106,7 +76,6 @@ export const CamWrapper = ({ children }: PropsWithChildren) => {
         clear,
         predictCountRef,
         videoRef,
-        devices,
         errorMessage,
       }}
     >

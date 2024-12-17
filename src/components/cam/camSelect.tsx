@@ -1,31 +1,104 @@
-import { useContext } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { CamContext } from "./context";
 import { camLocalStorage } from "./localStorage";
 
+const EMPTY_DEVICE = { label: "Not Selected", value: "" };
+
 export const CamSelect = () => {
-  const { devices, videoRef, flipRef } = useContext(CamContext);
+  const { videoRef, flipRef } = useContext(CamContext);
+  const [devices, setDevices] = useState<{ label: string; value: string }[]>([
+    EMPTY_DEVICE,
+  ]);
+
+  const selectedDeviceRef = useRef<string>(
+    camLocalStorage.getSelectedDeviceId() || "",
+  );
+  const [selectedDevice, _setSelectedDevice] = useState<string>(
+    camLocalStorage.getSelectedDeviceId() || "",
+  );
+
+  const setSelectedDevice = async (deviceId: string) => {
+    selectedDeviceRef.current = deviceId;
+    _setSelectedDevice(deviceId);
+    camLocalStorage.setSelectedDeviceId(deviceId);
+  };
+
+  const refreshDevices = useCallback(async (isFirst = false) => {
+    const d: { label: string; value: string }[] = [EMPTY_DEVICE];
+
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+
+      devices.forEach((device) => {
+        if (device.kind === "videoinput") {
+          d.push({ value: device.deviceId, label: device.label });
+        }
+      });
+
+      setDevices(d);
+
+      if (
+        (isFirst && !selectedDeviceRef.current) ||
+        !d.some((device) => device.value === selectedDeviceRef.current)
+      ) {
+        if (d.length > 1) setSelectedDevice(d[1].value);
+        else setSelectedDevice("");
+      }
+    } catch (e) {
+      alert(e);
+      setDevices(d);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshDevices(true);
+  }, [refreshDevices]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (selectedDevice) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { exact: selectedDevice },
+            },
+          });
+
+          videoRef.current.srcObject = stream;
+        } else {
+          videoRef.current.srcObject = null;
+        }
+      } catch (e) {
+        videoRef.current.srcObject = null;
+      }
+    })();
+  }, [selectedDevice, videoRef]);
+
+  useEffect(() => {
+    if (flipRef.current) {
+      videoRef.current.style.transform = "scaleX(-1)";
+    }
+  }, [flipRef, videoRef]);
 
   return (
     <>
-      <label>Select Camera</label>
+      <div className="d-flex align-items-center">
+        Select Camera
+        <button
+          className="btn bi bi-arrow-clockwise"
+          onClick={() => refreshDevices()}
+        ></button>
+      </div>
       <select
         className="form-select"
         onChange={(e) => {
-          navigator.mediaDevices
-            .getUserMedia({
-              video: {
-                deviceId: e.currentTarget.value,
-              },
-            })
-            .then((stream) => {
-              videoRef.current.srcObject = stream;
-              camLocalStorage.setSelectedDeviceId(e.currentTarget.value);
-            });
+          setSelectedDevice(e.currentTarget.value);
         }}
+        value={selectedDevice}
       >
-        {devices.map((d, idx) => (
+        {devices.map((d) => (
           <option key={d.value} value={d.value}>
-            {idx + 1}. {d.label || "Camera"}
+            {d.label}
           </option>
         ))}
       </select>

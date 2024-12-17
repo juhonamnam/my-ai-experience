@@ -8,7 +8,6 @@ export const CamContext = createContext<{
   clear: Clear;
   predictCountRef: MutableRefObject<number | null>;
   videoRef: MutableRefObject<HTMLVideoElement>;
-  devices: { label: string; value: string }[];
   errorMessage: string | null;
 }>({
   flipRef: { current: false },
@@ -17,6 +16,5 @@ export const CamContext = createContext<{
   clear: () => {},
   predictCountRef: { current: null },
   videoRef: { current: {} as HTMLVideoElement },
-  devices: [],
   errorMessage: null,
 });
