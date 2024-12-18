@@ -1,60 +1,61 @@
-import { ReactNode, useState } from "react";
-import Cam from "./components/Cam";
+import { useState } from "react";
+import Cam from "./components/cam";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
-import { ImageClassification } from "./components/models/ImageClassification";
-import { ObjectDetection } from "./components/models/ObjectDetection";
-import { PoseDetection } from "./components/models/PoseDetection";
-import { HandPoseDetection } from "./components/models/HandPoseDetection";
-import { BodySegmentation } from "./components/models/BodySegmentation";
-import { FaceLandmarksDetection } from "./components/models/FaceLandmarksDetection";
+import { MobileNetV1 } from "./components/models/MobileNetV1";
+import { MobileNetV2 } from "./components/models/MobileNetV2";
+import { MobileNetV3Large } from "./components/models/MobileNetV3Large";
+import { MobileNetV3Small } from "./components/models/MobileNetV3Small";
+import { SSDLiteMobileNetV2 } from "./components/models/SSDLiteMobileNetV2";
+import { MoveNetSinglePoseLightening } from "./components/models/MoveNetSinglePoseLightening";
+import { MediaPipeHandPoseFull } from "./components/models/MediaPipeHandPoseFull";
+import { BodyPixMobileNetStride16 } from "./components/models/BodyPixMobileNetStride16";
+import { MediaPipeFaceMesh } from "./components/models/MediaPipeFaceMesh";
 
-enum ModelType {
-  None = "None",
-  ImageClassification = "Image Classification",
-  ObjectDetection = "Object Detection",
-  PoseDetection = "Pose Detection",
-  HandPoseDetection = "Hand Pose Detection",
-  BodySegmentation = "Body Segmentation",
-  FaceLandmarksDetection = "Face Landmarks Detection",
-}
-const renderModel: { [key in ModelType]: ReactNode } = {
-  [ModelType.None]: <></>,
-  [ModelType.ImageClassification]: <ImageClassification />,
-  [ModelType.ObjectDetection]: <ObjectDetection />,
-  [ModelType.PoseDetection]: <PoseDetection />,
-  [ModelType.HandPoseDetection]: <HandPoseDetection />,
-  [ModelType.BodySegmentation]: <BodySegmentation />,
-  [ModelType.FaceLandmarksDetection]: <FaceLandmarksDetection />,
+const MODELS = {
+  None: <></>,
+  MobileNetV1: <MobileNetV1 />,
+  MobileNetV2: <MobileNetV2 />,
+  "MobileNetV3-Large": <MobileNetV3Large />,
+  "MobileNetV3-Small": <MobileNetV3Small />,
+  SSDLite: <SSDLiteMobileNetV2 />,
+  MoveNet: <MoveNetSinglePoseLightening />,
+  BodyPix: <BodyPixMobileNetStride16 />,
+  "MediaPipe-HandPose": <MediaPipeHandPoseFull />,
+  "MediaPipe-FaceMesh": <MediaPipeFaceMesh />,
 };
 
 function App() {
-  const [modelType, setModelType] = useState<ModelType>(ModelType.None);
+  const [selectedModel, setSelectedModel] =
+    useState<keyof typeof MODELS>("None");
 
   return (
-    <div className="d-flex justify-content-center">
-      <div>
-        <label>Select Model</label>
-        <select
-          className="form-select"
-          onChange={(e) => {
-            setModelType(e.currentTarget.value as ModelType);
-          }}
-        >
-          {Object.values(ModelType).map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        <div style={{ position: "relative" }}>
-          <Cam.CamWrapper>
+    <div className="d-flex justify-content-center container">
+      <Cam.CamWrapper>
+        <div>
+          <div className="pt-1 pb-1">Select Model</div>
+          <select
+            className="form-select"
+            onChange={(e) => {
+              setSelectedModel(e.currentTarget.value as keyof typeof MODELS);
+            }}
+          >
+            {Object.keys(MODELS).map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <Cam.CamSelect />
+          <div className="position-relative">
             <Cam.Cam />
-            {renderModel[modelType]}
-          </Cam.CamWrapper>
+            {MODELS[selectedModel]}
+          </div>
+          <Cam.CamStatus />
         </div>
-      </div>
+      </Cam.CamWrapper>
     </div>
   );
 }
