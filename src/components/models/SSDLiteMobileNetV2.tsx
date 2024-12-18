@@ -170,8 +170,8 @@ export const SSDLiteMobileNetV2 = () => {
           filtered_boxes[indexes[i] * 4 + 2] * scale.y * camData.clientHeight;
         const xMax =
           (flipRef.current
-            ? 1 - filtered_boxes[indexes[i] * 4 + 1] * scale.x
-            : filtered_boxes[indexes[i] * 4 + 3] * scale.x) *
+            ? 1 - (filtered_boxes[indexes[i] * 4 + 1] - padding.x) * scale.x
+            : (filtered_boxes[indexes[i] * 4 + 3] - padding.x) * scale.x) *
           camData.clientWidth;
 
         const classIndex = filtered_classes[indexes[i]] + 1;
