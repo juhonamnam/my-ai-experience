@@ -7,7 +7,8 @@ import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import { getSSDAnchors, SSDAnchor } from "../ssdAnchors";
 import { MEDIAPIPE_FACE_MESH_CONNECTED_KEYPOINTS_PAIRS } from "../mediapipeFaceMeshConnectedKeypointsPairs";
 
-const DETECTION_MODEL_URL = "/models/mediapipe-face-detection-short/model.json";
+const DETECTION_MODEL_URL =
+  `${process.env.PUBLIC_URL}/models/mediapipe-face-detection-short/model.json`;
 const DETECTION_IMAGE_SIZE = [128, 128] as const;
 const DETECTION_BOXES = 896;
 const DETECTION_FEATURES = 16;
@@ -16,7 +17,7 @@ const DETECTION_KEYPOINTS_IN_USE = [0, 1];
 const FACES_NUM = 1;
 
 const LANDMARK_MODEL_URL =
-  "/models/mediapipe-face-landmark-detection/model.json";
+  `${process.env.PUBLIC_URL}/models/mediapipe-face-landmark-detection/model.json`;
 const LANDMARK_IMAGE_SIZE = [192, 192];
 const LANDMARK_KEYPOINTS = 468;
 const LINE_WIDTH = 1;

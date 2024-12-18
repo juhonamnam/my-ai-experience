@@ -5,7 +5,7 @@ import { useLoading } from "../Loading";
 import * as tf from "@tensorflow/tfjs";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 
-const MODEL_URL = "/models/bodypix-mobilenet-stride16/model.json";
+const MODEL_URL = `${process.env.PUBLIC_URL}/models/bodypix-mobilenet-stride16/model.json`;
 const SEGMENT_SCORE_THRESHOLD = 0.7;
 const PART_RGBS: Array<[number, number, number]> = [
   [110, 64, 170],

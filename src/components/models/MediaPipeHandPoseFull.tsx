@@ -8,9 +8,9 @@ import { getSSDAnchors, SSDAnchor } from "../ssdAnchors";
 import { MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS } from "../mediapipeConnectedKeypointsPairs";
 
 const DETECTION_MODEL_URL =
-  "/models/mediapipe-handpose-detection-full/model.json";
+  `${process.env.PUBLIC_URL}/models/mediapipe-handpose-detection-full/model.json`;
 const LANDMARK_MODEL_URL =
-  "/models/mediapipe-handpose-landmark-full/model.json";
+  `${process.env.PUBLIC_URL}/models/mediapipe-handpose-landmark-full/model.json`;
 const DETECTION_IMAGE_SIZE = [192, 192] as const;
 const DETECTION_SCORE_THRESHOLD = 0.5;
 const DETECTION_BOXES = 2016;

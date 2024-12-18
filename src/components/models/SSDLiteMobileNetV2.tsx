@@ -6,7 +6,7 @@ import * as tf from "@tensorflow/tfjs";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import { OBJECT_DETECTION_CLASSES } from "../objectDetectionClasses";
 
-const MODEL_URL = "/models/ssdlitemobilenetv2/model.json";
+const MODEL_URL = `${process.env.PUBLIC_URL}/models/ssdlitemobilenetv2/model.json`;
 const IMAGE_SIZE = [224, 224] as const;
 const BOX_DETECTORS = 1917;
 const CLASSES = 90;

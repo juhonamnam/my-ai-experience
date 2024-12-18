@@ -6,7 +6,7 @@ import * as tf from "@tensorflow/tfjs";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import { IMAGENET_CLASSES } from "../imagenetClasses";
 
-const MODEL_URL = "/models/mobilenetv3large/model.json";
+const MODEL_URL = `${process.env.PUBLIC_URL}/models/mobilenetv3large/model.json`;
 const IMAGE_SIZE = [224, 224] as const;
 const TOPK = 3;
 

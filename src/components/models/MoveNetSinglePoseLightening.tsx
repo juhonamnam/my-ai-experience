@@ -6,7 +6,7 @@ import * as tf from "@tensorflow/tfjs";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import { COCO_ADJACENT_KEYPAIRS } from "../cocoAdjacentKeyPairs";
 
-const MODEL_URL = "/models/movenet-singlepose-lightening/model.json";
+const MODEL_URL = `${process.env.PUBLIC_URL}/models/movenet-singlepose-lightening/model.json`;
 const IMAGE_SIZE = [192, 192] as const;
 const KEYPOINT_SIZE = 17;
 const SCORE_THRESHOLD = 0.3;
