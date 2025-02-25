@@ -24,6 +24,7 @@ export const CamSelect = () => {
   };
 
   const refreshDevices = useCallback(async (isFirst = false) => {
+    await navigator.mediaDevices.getUserMedia({ video: true });
     const d: { label: string; value: string }[] = [EMPTY_DEVICE];
 
     try {
